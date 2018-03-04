@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.converter.HttpMessageNotWritableException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -25,6 +26,7 @@ import javax.validation.ConstraintViolationException;
 import static io.polyglotted.common.util.NullUtil.nonNullFn;
 import static org.springframework.core.Ordered.HIGHEST_PRECEDENCE;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.http.HttpStatus.FORBIDDEN;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 @Slf4j @Order(HIGHEST_PRECEDENCE) @ControllerAdvice
@@ -52,17 +54,6 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
             .withFieldErrors(ex.getBindingResult().getFieldErrors()).withObjectErrors(ex.getBindingResult().getGlobalErrors()));
     }
 
-    @ExceptionHandler(javax.validation.ConstraintViolationException.class)
-    protected ResponseEntity<Object> handleConstraintViolation(javax.validation.ConstraintViolationException ex) {
-        return buildResponseEntity(new ApiError(BAD_REQUEST, "Validation error").withViolations(ex.getConstraintViolations()));
-    }
-
-    @ExceptionHandler(NotFoundException.class)
-    protected ResponseEntity<Object> handleEntityNotFound(NotFoundException ex) { return buildResponseEntity(new ApiError(NOT_FOUND, ex)); }
-
-    @ExceptionHandler(WebException.class)
-    protected ResponseEntity<Object> handleWebException(WebException ex) { return buildResponseEntity(new ApiError(ex.status, ex)); }
-
     @Override
     protected ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException ex, HttpHeaders headers,
                                                                   HttpStatus status, WebRequest request) {
@@ -75,6 +66,22 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     protected ResponseEntity<Object> handleHttpMessageNotWritable(HttpMessageNotWritableException ex, HttpHeaders headers,
                                                                   HttpStatus status, WebRequest request) {
         return buildResponseEntity(new ApiError(HttpStatus.INTERNAL_SERVER_ERROR, "Error writing JSON output", ex));
+    }
+
+    @ExceptionHandler(NotFoundException.class)
+    protected ResponseEntity<Object> handleEntityNotFound(NotFoundException ex) { return buildResponseEntity(new ApiError(NOT_FOUND, ex)); }
+
+    @ExceptionHandler(WebException.class)
+    protected ResponseEntity<Object> handleWebException(WebException ex) { return buildResponseEntity(new ApiError(ex.status, ex)); }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    protected ResponseEntity<Object> handleAccessDeniedException(Exception ex) {
+        return buildResponseEntity(new ApiError(FORBIDDEN, "User does not have necessary ROLE to perform action", ex));
+    }
+
+    @ExceptionHandler(javax.validation.ConstraintViolationException.class)
+    protected ResponseEntity<Object> handleConstraintViolation(javax.validation.ConstraintViolationException ex) {
+        return buildResponseEntity(new ApiError(BAD_REQUEST, "Validation error").withViolations(ex.getConstraintViolations()));
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)

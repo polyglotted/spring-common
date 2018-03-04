@@ -14,6 +14,14 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import java.util.Map;
+
+import static io.polyglotted.common.util.MapBuilder.immutableMap;
 
 @SuppressWarnings("unused")
 @ComponentScan({"io.polyglotted.spring"})
@@ -34,6 +42,17 @@ public class CognitoDemo {
     }
 
     public static void main(String args[]) { SpringApplication.run(CognitoDemo.class, args); }
+
+    @Controller
+    static class SampleController {
+        @PreAuthorize("hasRole('ROLE_CONSUMER') or hasRole('ROLE_CURATOR')")
+        @GetMapping(path = "/api/sample", produces = "application/json")
+        @ResponseBody public Map<String, Object> sample() { return immutableMap("result", "ok"); }
+
+        @PreAuthorize("hasRole('ROLE_ADMINISTRATOR')")
+        @GetMapping(path = "/api/sample-admin", produces = "application/json")
+        @ResponseBody public Map<String, Object> sampleAdmin() { return immutableMap("result", "admin"); }
+    }
 
     @NoArgsConstructor @Getter @Setter
     static class IntegrationUser {

@@ -1,5 +1,6 @@
 package io.polyglotted.spring.cognito;
 
+import com.amazonaws.services.cognitoidp.model.AWSCognitoIdentityProviderException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -23,10 +24,11 @@ public class CognitoAuthFilter extends OncePerRequestFilter {
             authentication = cognitoProcessor.authenticate(request);
             if (authentication != null) { SecurityContextHolder.getContext().setAuthentication(authentication); }
 
-        } catch (Exception e) {
-            logger.error("Error occured while processing Bearer token", e);
+        } catch (AWSCognitoIdentityProviderException ex) {
+            logger.error("IDP Error processing Bearer token " + ex.getMessage());
             SecurityContextHolder.clearContext();
-        }
+
+        } catch (Exception ex) { logger.error("Unknown Error processing Bearer token", ex); }
         filterChain.doFilter(request, response);
     }
 }
