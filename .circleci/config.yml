@@ -37,8 +37,7 @@ jobs:
           path: artifacts
       - run:
           name: Upload Code Coverage
-          command: 'bash <(curl -s https://codecov.io/bash) -t 4d498a44-3e61-4f47-8b5f-99b59dfd7634
-
+          command: 'bash <(curl -s https://codecov.io/bash) -t 4d498a44-3e61-4f47-8b5f-99b59dfd7634'
   deploy:
     docker:
       - image: circleci/openjdk:8-jdk
