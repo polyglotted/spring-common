@@ -2,6 +2,7 @@ package io.polyglotted.spring.security;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import io.polyglotted.common.model.MapResult;
 import io.polyglotted.common.util.ConversionUtil;
 import lombok.Builder;
 import lombok.NonNull;
@@ -11,7 +12,6 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Function;
 
 import static com.google.common.collect.Lists.transform;
@@ -45,20 +45,18 @@ public final class Principal {
     public List<GrantedAuthority> authorities() { return transform(roles, role -> new SimpleGrantedAuthority("ROLE_" + role.toUpperCase())); }
 
     public static class Builder {
-        public Builder fillFrom(Map<String, Object> map) {
-            return name(removeIfExists(map, "name", null)).mobileNumber(removeIfExists(map, "mobileNumber", null))
-                .countryCode(removeIfExists(map, "countryCode", null)).messenger(removeIfExists(map, "messenger", null))
-                .activated(removeIfExists(map, "activated", false)).mfaStatus(removeIfExists(map, "mfaStatus", null))
-                .mfaProvider(removeIfExists(map, "mfaProvider", null)).mfaId(removeIfExists(map, "mfaId", null))
-                .email(removeIfExists(map, "email", null)).jobTitle(removeIfExists(map, "jobTitle", null))
-                .timeZone(removeIfExists(map, "timeZone", null)).language(removeIfExists(map, "language", null))
+        public Builder fillFrom(MapResult map) {
+            return name(removeIfExists(map, "name")).mobileNumber(removeIfExists(map, "mobileNumber"))
+                .countryCode(removeIfExists(map, "countryCode")).messenger(removeIfExists(map, "messenger"))
+                .activated(removeIfExists(map, "activated", false)).mfaStatus(removeIfExists(map, "mfaStatus"))
+                .mfaProvider(removeIfExists(map, "mfaProvider")).mfaId(removeIfExists(map, "mfaId")).email(removeIfExists(map, "email"))
+                .jobTitle(removeIfExists(map, "jobTitle")).timeZone(removeIfExists(map, "timeZone")).language(removeIfExists(map, "language"))
                 .registered(nullOrVal(map, "registered", Object.class, ConversionUtil::asLocalDateTime))
-                .permissions(nullOrVal(map, "permissions", STRING_LIST_CLASS, ImmutableList::copyOf))
-                .tags(ImmutableMap.copyOf(map));
+                .permissions(nullOrVal(map, "permissions", STRING_LIST_CLASS, ImmutableList::copyOf)).tags(ImmutableMap.copyOf(map));
         }
 
-        private static <T, R> T nullOrVal(Map<String, Object> map, String prop, Class<R> clazz, Function<R, T> function) {
-            return map.containsKey(prop) ? function.apply(clazz.cast(removeIfExists(map, prop, null))) : null;
+        private static <T, R> T nullOrVal(MapResult map, String prop, Class<R> clazz, Function<R, T> function) {
+            return map.containsKey(prop) ? function.apply(clazz.cast(removeIfExists(map, prop))) : null;
         }
     }
 }

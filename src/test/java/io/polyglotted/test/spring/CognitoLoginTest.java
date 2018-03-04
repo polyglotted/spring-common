@@ -1,6 +1,8 @@
 package io.polyglotted.test.spring;
 
 import com.amazonaws.services.cognitoidp.model.AuthenticationResultType;
+import io.polyglotted.common.model.MapResult;
+import io.polyglotted.common.model.MapResult.SimpleMapResult;
 import io.polyglotted.test.spring.CognitoDemo.IntegrationUser;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -9,9 +11,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import java.util.Map;
-
-import static io.polyglotted.common.util.MapRetriever.MAP_CLASS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -30,7 +29,7 @@ public class CognitoLoginTest {
         assertThat(loginResult, is(notNullValue()));
         assertThat(loginResult.getAccessToken(), is(notNullValue()));
 
-        Map<String, Object> logoutResult = restTemplate.postForObject("/cognito/logout", loginResult, MAP_CLASS);
+        MapResult logoutResult = restTemplate.postForObject("/cognito/logout", loginResult, SimpleMapResult.class);
         assertThat(logoutResult, is(notNullValue()));
         assertThat(logoutResult.get("result"), is("logged-out"));
     }
