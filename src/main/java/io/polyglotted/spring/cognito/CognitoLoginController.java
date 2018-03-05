@@ -34,7 +34,7 @@ public class CognitoLoginController extends AbstractCognito {
 
     @PostMapping(path = "/cognito/login", params = {"email", "password"}, produces = "application/json")
     @ResponseBody public AuthenticationResultType login(String email, String password) throws IOException {
-        checkBadRequest(notNullOrEmpty(email) && notNullOrEmpty(password), "invalid creds");
+        checkBadRequest(notNullOrEmpty(email) && notNullOrEmpty(password), "Invalid credentials.");
         try {
             AdminInitiateAuthRequest authRequest = new AdminInitiateAuthRequest()
                 .withAuthFlow(AuthFlowType.ADMIN_NO_SRP_AUTH).withAuthParameters(simpleMap("USERNAME", email, "PASSWORD", password,
@@ -42,7 +42,7 @@ public class CognitoLoginController extends AbstractCognito {
             AdminInitiateAuthResult authResponse = cognitoClient.adminInitiateAuth(authRequest);
 
             if (isNullOrEmpty(authResponse.getChallengeName())) { return authResponse.getAuthenticationResult(); }
-            throw unauthorisedException("unexpected challenge on signin: " + authResponse.getChallengeName());
+            throw unauthorisedException("Unexpected challenge on signin: " + authResponse.getChallengeName() + ".");
 
         } catch (UserNotFoundException | NotAuthorizedException ex) {
             log.debug("not found or invalid creds: {}", email); throw unauthorisedException(safePrefix(ex.getMessage(), " ("));

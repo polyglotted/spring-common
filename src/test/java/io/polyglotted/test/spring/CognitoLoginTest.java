@@ -24,6 +24,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 import static org.springframework.http.HttpMethod.GET;
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.FORBIDDEN;
 import static org.springframework.http.HttpStatus.OK;
 import static org.springframework.http.HttpStatus.UNAUTHORIZED;
@@ -37,8 +38,16 @@ public class CognitoLoginTest {
 
     @Test
     public void loginFailure() throws Exception {
-        String url = "/cognito/login?email=" + user1.getEmail() + "&password=fooBarBaz";
+        String url = "/cognito/login?email=&password=fooBarBaz";
         ResponseEntity<SimpleMapResult> responseEntity = restTemplate.postForEntity(url, "{}", SimpleMapResult.class);
+        assertEntity(responseEntity, BAD_REQUEST, "message", "Invalid credentials.");
+
+        url = "/cognito/login?email=" + user1.getEmail() + "&password=";
+        responseEntity = restTemplate.postForEntity(url, "{}", SimpleMapResult.class);
+        assertEntity(responseEntity, BAD_REQUEST, "message", "Invalid credentials.");
+
+        url = "/cognito/login?email=" + user1.getEmail() + "&password=fooBarBaz";
+        responseEntity = restTemplate.postForEntity(url, "{}", SimpleMapResult.class);
         assertEntity(responseEntity, UNAUTHORIZED, "message", "Incorrect username or password.");
 
         url = "/cognito/login?email=foo@fooz.com&password=fooBarBaz";
@@ -60,6 +69,10 @@ public class CognitoLoginTest {
 
         responseEntity = restTemplate.postForEntity("/cognito/logout", loginResult, SimpleMapResult.class);
         assertEntity(responseEntity, OK, "result", "logged-out");
+
+        responseEntity = restTemplate.exchange("/api/sample", GET,
+            buildRequest(null, loginResult.getAccessToken()), SimpleMapResult.class);
+        assertEntity(responseEntity, UNAUTHORIZED, "message", "Unauthorized");
     }
 
     @Test
