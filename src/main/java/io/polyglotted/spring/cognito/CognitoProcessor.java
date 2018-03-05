@@ -4,10 +4,13 @@ import com.amazonaws.services.cognitoidp.AWSCognitoIdentityProvider;
 import com.amazonaws.services.cognitoidp.model.AttributeType;
 import com.amazonaws.services.cognitoidp.model.GetUserRequest;
 import com.amazonaws.services.cognitoidp.model.GetUserResult;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import io.polyglotted.common.model.MapResult;
+import io.polyglotted.common.model.MapResult.SimpleMapResult;
 import io.polyglotted.spring.security.DefaultAuthToken;
 import io.polyglotted.spring.security.Principal;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -17,7 +20,6 @@ import java.util.List;
 
 import static com.google.common.collect.Lists.transform;
 import static io.polyglotted.common.model.MapResult.simpleResult;
-import static io.polyglotted.common.util.BaseSerializer.deserialize;
 import static io.polyglotted.common.util.MapRetriever.listVal;
 import static io.polyglotted.common.util.MapRetriever.removeVal;
 import static java.util.Locale.ENGLISH;
@@ -26,6 +28,7 @@ import static org.apache.http.HttpHeaders.AUTHORIZATION;
 
 @Slf4j @Component
 public class CognitoProcessor extends AbstractCognito {
+    @Autowired private ObjectMapper objectMapper = null;
 
     @Autowired public CognitoProcessor(CognitoConfig config, AWSCognitoIdentityProvider cognitoClient) { super(config, cognitoClient); }
 
@@ -53,10 +56,10 @@ public class CognitoProcessor extends AbstractCognito {
         return builder.expiry(asTime(jwt, "exp")).issuedAt(asTime(jwt, "iat")).roles(ImmutableList.copyOf(roles(jwt)));
     }
 
-    private static MapResult parseJwt(String token) {
+    @SneakyThrows private MapResult parseJwt(String token) {
         String[] parts = token.split("\\.");
         if (parts.length != 3) { throw new IllegalArgumentException("invalid token parts"); }
-        return deserialize(decodeBase64(parts[1]));
+        return objectMapper.readValue(decodeBase64(parts[1]), SimpleMapResult.class);
     }
 
     private static List<String> roles(MapResult map) { return transform(listVal(map, "cognito:groups"), CognitoProcessor::groupToRole); }
