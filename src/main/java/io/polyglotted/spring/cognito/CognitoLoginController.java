@@ -7,7 +7,6 @@ import com.amazonaws.services.cognitoidp.model.AuthFlowType;
 import com.amazonaws.services.cognitoidp.model.AuthenticationResultType;
 import com.amazonaws.services.cognitoidp.model.GlobalSignOutRequest;
 import com.amazonaws.services.cognitoidp.model.NotAuthorizedException;
-import com.amazonaws.services.cognitoidp.model.TooManyRequestsException;
 import com.amazonaws.services.cognitoidp.model.UserNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +22,7 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 import static io.polyglotted.common.util.MapBuilder.immutableMap;
 import static io.polyglotted.common.util.MapBuilder.simpleMap;
 import static io.polyglotted.common.util.StrUtil.notNullOrEmpty;
-import static io.polyglotted.common.util.ThreadUtil.safeSleep;
+import static io.polyglotted.common.util.StrUtil.safePrefix;
 import static io.polyglotted.spring.errorhandling.ExceptionFactory.checkBadRequest;
 import static io.polyglotted.spring.errorhandling.ExceptionFactory.unauthorisedException;
 
@@ -35,7 +34,6 @@ public class CognitoLoginController extends AbstractCognito {
 
     @PostMapping(path = "/cognito/login", params = {"email", "password"}, produces = "application/json")
     @ResponseBody public AuthenticationResultType login(String email, String password) throws IOException {
-        System.out.println(">>>> COGNITO LOGIN");
         checkBadRequest(notNullOrEmpty(email) && notNullOrEmpty(password), "invalid creds");
         try {
             AdminInitiateAuthRequest authRequest = new AdminInitiateAuthRequest()
@@ -47,10 +45,7 @@ public class CognitoLoginController extends AbstractCognito {
             throw unauthorisedException("unexpected challenge on signin: " + authResponse.getChallengeName());
 
         } catch (UserNotFoundException | NotAuthorizedException ex) {
-            log.debug("not found or invalid creds: {}", email); throw unauthorisedException(ex.getMessage());
-
-        } catch (TooManyRequestsException ex) {
-            log.warn("caught TooManyRequestsException, delaying then retrying"); safeSleep(250); return login(email, password);
+            log.debug("not found or invalid creds: {}", email); throw unauthorisedException(safePrefix(ex.getMessage(), " ("));
         }
     }
 

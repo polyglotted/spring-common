@@ -34,8 +34,11 @@ public class CognitoDemo {
     @Bean @ConfigurationProperties("aws.cognito")
     public CognitoConfig cognitoConfig() { return new CognitoConfig(); }
 
-    @Bean @ConfigurationProperties("spc.intg.user")
-    public IntegrationUser integrationUser() { return new IntegrationUser(); }
+    @Bean(name = "integrationUser1") @ConfigurationProperties("spc.intg.user")
+    public IntegrationUser integrationUser1() { return new IntegrationUser(); }
+
+    @Bean(name = "integrationUser2") @ConfigurationProperties("spc.intg.user2")
+    public IntegrationUser integrationUser2() { return new IntegrationUser(); }
 
     @Bean public AWSCognitoIdentityProvider cognitoClient(AwsConfig config) {
         return AWSCognitoIdentityProviderClient.builder().withCredentials(CredsProvider.getProvider(config)).withRegion(config.regions()).build();
