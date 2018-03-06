@@ -8,6 +8,7 @@ import com.google.common.net.InetAddresses;
 import io.polyglotted.common.model.GeoPoint;
 import io.polyglotted.common.model.GeoShape;
 import io.polyglotted.common.model.GeoType;
+import io.polyglotted.common.model.MapResult;
 import io.polyglotted.test.spring.ObjectInputs.CollClass;
 import io.polyglotted.test.spring.ObjectInputs.RefClass;
 import io.polyglotted.test.spring.ObjectInputs.SimpleClass;
@@ -23,7 +24,6 @@ import org.springframework.boot.test.autoconfigure.json.JsonTest;
 import org.springframework.test.context.junit4.rules.SpringClassRule;
 import org.springframework.test.context.junit4.rules.SpringMethodRule;
 
-import java.io.IOException;
 import java.math.BigInteger;
 import java.net.URI;
 import java.net.URL;
@@ -35,6 +35,11 @@ import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.util.Date;
 
+import static io.polyglotted.common.util.BaseSerializer.deserialize;
+import static io.polyglotted.common.util.BaseSerializer.serialize;
+import static io.polyglotted.common.util.BaseSerializer.serializeBytes;
+import static io.polyglotted.common.util.ObjConstructor.construct;
+import static io.polyglotted.common.util.ReflectionUtil.create;
 import static io.polyglotted.common.util.UuidUtil.uuidFrom;
 import static io.polyglotted.test.spring.ObjectInputs.MyConst.BAZ;
 import static java.time.ZoneOffset.UTC;
@@ -75,13 +80,48 @@ public class SerializationTest {
     }
 
     @Test @Parameters(method = "objInputs")
-    public void loginFailure(Object expected) throws Exception {
-        String json = serialize(expected);
-        Object actual = deserialize(json, expected.getClass());
-        assertThat("Failed comparison \nexpected: " + json + "\nactual: " + serialize(actual), actual, is(expected));
+    public void serialiseNative(Object expected) throws Exception {
+        String json = serialize(objectMapper, expected);
+        assertThat("\n" + json + "\n" + serialize(expected), json, is(serialize(expected)));
+
+        Object actual = deserialize(objectMapper, json, expected.getClass());
+        assertThat(json, actual, is(expected));
+
+        MapResult mapResult = deserialize(objectMapper, json);
+        assertThat(serialize(objectMapper, mapResult), json, is(serialize(objectMapper, mapResult)));
     }
 
-    private String serialize(Object value) throws IOException { return objectMapper.writeValueAsString(value); }
 
-    private <T> T deserialize(String json, Class<T> clazz) throws IOException { return objectMapper.readValue(json, clazz); }
+    @Test @Parameters(method = "objInputs")
+    public void serializeAndConstruct(Object expected) throws Exception {
+        byte[] bytes = serializeBytes(objectMapper, expected);
+        Object actual = construct(deserialize(objectMapper, bytes), create(expected.getClass()));
+        assertThat(serialize(objectMapper, actual), actual, is(expected));
+
+        MapResult mapResult = deserialize(objectMapper, bytes);
+        assertThat(serialize(objectMapper, mapResult), bytes, is(serializeBytes(objectMapper, mapResult)));
+    }
+
+    public static Object[][] jsonInputs() throws Exception {
+        return new Object[][]{
+            {"{\"fullStr\":null,\"date\":\"2016-02-15T04:30Z\"}", new Simplified().date(1455510600000L)},
+            {"{\"dateLongs\":[\"2016-02-15T04:30Z\"]}", new CollClass().dateLongs(ImmutableList.of(1455510600000L))},
+            {"{\"primMap\":{\"qux\":\"2016-02-15T04:30Z\"}}", new CollClass().primMap(ImmutableMap.of("qux", "2016-02-15T04:30Z"))},
+        };
+    }
+
+    @Test @Parameters(method = "jsonInputs")
+    public void serializeStrAsDateLong(String json, Object expected) throws Exception {
+        Object actual = deserialize(objectMapper, json, expected.getClass());
+        assertThat(json, actual, is(expected));
+        Object actual2 = construct(deserialize(objectMapper, json), create(expected.getClass()));
+        assertThat(json, actual2, is(expected));
+    }
+
+    @Test
+    public void serializeEmptyStringToNull() throws Exception {
+        Simplified expected = new Simplified().fullStr("");
+        String json = serialize(objectMapper, expected);
+        assertThat(json, deserialize(objectMapper, json, Simplified.class), is(new Simplified()));
+    }
 }
