@@ -2,6 +2,7 @@ package io.polyglotted.test.spring;
 
 import com.amazonaws.services.cognitoidp.AWSCognitoIdentityProvider;
 import com.amazonaws.services.cognitoidp.AWSCognitoIdentityProviderClient;
+import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.ulisesbocchio.jasyptspringboot.annotation.EnableEncryptableProperties;
 import io.polyglotted.aws.config.AwsConfig;
 import io.polyglotted.aws.config.CredsProvider;
@@ -10,6 +11,8 @@ import io.polyglotted.spring.web.SimpleResponse;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import net.iharder.Base64;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -18,14 +21,25 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URLDecoder;
+
+import static com.amazonaws.util.IOUtils.copy;
+import static io.polyglotted.aws.common.S3Fetcher.fetchMayBeSecure;
+import static io.polyglotted.aws.common.S3Fetcher.fetchObjectMetadata;
 import static io.polyglotted.common.model.MapResult.immutableResult;
+import static io.polyglotted.common.util.StrUtil.safeLastSuffix;
+import static io.polyglotted.test.spring.AwsContentUtil.fetchContentType;
 
 @SuppressWarnings("unused")
 @ComponentScan({"io.polyglotted.spring"})
-@EnableEncryptableProperties
-@SpringBootApplication
+@EnableEncryptableProperties @SpringBootApplication
 public class CognitoDemo {
     @Bean @ConfigurationProperties("aws")
     public AwsConfig awsConfig() { return new AwsConfig(); }
@@ -45,8 +59,13 @@ public class CognitoDemo {
 
     public static void main(String args[]) { SpringApplication.run(CognitoDemo.class, args); }
 
-    @Controller
-    static class SampleController {
+    @NoArgsConstructor @Getter @Setter
+    static class IntegrationUser {
+        private String email;
+        private String password;
+    }
+
+    @Controller static class SampleController {
         @PreAuthorize("hasRole('ROLE_CONSUMER') or hasRole('ROLE_CURATOR')")
         @GetMapping(path = "/api/sample", produces = "application/json")
         @ResponseBody public SimpleResponse sample() { return SimpleResponse.OK; }
@@ -56,9 +75,25 @@ public class CognitoDemo {
         @ResponseBody public SimpleResponse sampleAdmin() { return new SimpleResponse(immutableResult("result", "admin")); }
     }
 
-    @NoArgsConstructor @Getter @Setter
-    static class IntegrationUser {
-        private String email;
-        private String password;
+    @Controller static class DataController {
+
+        private static final String BUCKET = "steeleye-sdk-java.steeleye.co";
+        @Autowired private AwsConfig awsConfig = null;
+
+        @PreAuthorize("hasRole('ROLE_CURATOR')") @GetMapping(path = "/api/download/{key}")
+        public void download(HttpServletResponse response, @PathVariable("key") String keyStr,
+                             @RequestParam(name = "base64", defaultValue = "false") boolean base64) throws IOException {
+            String key = URLDecoder.decode(keyStr, "utf-8");
+            ObjectMetadata metadata = fetchObjectMetadata(awsConfig, BUCKET, key);
+            String contentType = fetchContentType(metadata, immutableResult(), key);
+            InputStream baseStream = fetchMayBeSecure(awsConfig, BUCKET, key, metadata);
+            try (InputStream inputStream = base64 ? new Base64.InputStream(baseStream) : baseStream) {
+
+                response.addHeader("Content-Disposition", "attachment;filename=\"" + safeLastSuffix(key, "/") + "\"");
+                response.setContentType(contentType);
+                copy(inputStream, response.getOutputStream());
+                response.flushBuffer();
+            }
+        }
     }
 }

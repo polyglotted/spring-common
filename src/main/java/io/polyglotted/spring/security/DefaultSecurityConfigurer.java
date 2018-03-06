@@ -7,10 +7,13 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import org.springframework.security.web.firewall.HttpFirewall;
+import org.springframework.security.web.firewall.StrictHttpFirewall;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -25,6 +28,11 @@ public class DefaultSecurityConfigurer extends WebSecurityConfigurerAdapter {
     @Autowired private RestAuthEntryPoint restAuthEntryPoint = null;
 
     @Override public void configure(AuthenticationManagerBuilder auth) throws Exception { auth.authenticationProvider(defaultAuthProvider); }
+
+    @Override public void configure(WebSecurity web) throws Exception {
+        super.configure(web);
+        web.httpFirewall(httpFirewall());
+    }
 
     @Override protected void configure(HttpSecurity http) throws Exception {
         // @formatter:off
@@ -60,5 +68,13 @@ public class DefaultSecurityConfigurer extends WebSecurityConfigurerAdapter {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
+    }
+
+    @SuppressWarnings("WeakerAccess") @Bean public HttpFirewall httpFirewall() {
+        StrictHttpFirewall firewall = new StrictHttpFirewall();
+        firewall.setAllowUrlEncodedSlash(true);
+        firewall.setAllowUrlEncodedPercent(true);
+        firewall.setAllowUrlEncodedPeriod(true);
+        return firewall;
     }
 }
