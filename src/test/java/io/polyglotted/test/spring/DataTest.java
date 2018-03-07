@@ -1,13 +1,14 @@
 package io.polyglotted.test.spring;
 
-import com.amazonaws.services.cognitoidp.model.AuthenticationResultType;
+import io.polyglotted.common.model.MapResult;
 import io.polyglotted.common.model.MapResult.SimpleMapResult;
-import junit.framework.AssertionFailedError;
+import io.polyglotted.spring.security.AccessKey;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import static io.polyglotted.common.model.MapResult.simpleResult;
 import static io.polyglotted.common.util.EncodingUtil.urlEncode;
 import static io.polyglotted.common.util.ResourceUtil.readResourceBytes;
 import static io.polyglotted.common.util.ThreadUtil.safeSleep;
@@ -20,46 +21,61 @@ import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
 public class DataTest extends AbstractSpringTest {
 
     @Test
-    public void downloadSuccess() throws Exception {
-        AuthenticationResultType loginResult = loginUser(user1);
+    public void defaultPutTest() throws Exception {
+        AccessKey accessKey = loginUser(user2);
         try {
-            ResponseEntity<String> stringResp = doGet("/api/download/" + urlEncode("emltest/kmsobj123"), loginResult, String.class);
+            MapResult expected = simpleResult("baz", 1, "foo", "bar");
+            ResponseEntity<SimpleMapResult> result = doPut("/api/put/test", accessKey, expected, SimpleMapResult.class);
+            assertThat(result.getBody(), is(expected));
+        } catch (AssertionError ex) {
+            ex.printStackTrace();
+        } finally { logout(accessKey); }
+    }
+
+    @Test
+    public void downloadSuccess() throws Exception {
+        AccessKey accessKey = loginUser(user1);
+        try {
+            ResponseEntity<String> stringResp = doGet("/api/download/" + urlEncode("emltest/kmsobj123"), accessKey, String.class);
             assertThat(stringResp.getBody(), is("hello kms"));
 
-            stringResp = doGet("/api/download/" + urlEncode("emltest/nokms.txt"), loginResult, String.class);
+            stringResp = doGet("/api/download/" + urlEncode("emltest/nokms.txt"), accessKey, String.class);
             assertThat(stringResp.getBody(), is("no kms id"));
 
-            assertThat(requireNonNull(downloadEntity(loginResult, "emltest/largemp3.mp3", "audio/mp3").getBody()).length, is(443926));
-        } finally { logout(loginResult); }
+            assertThat(requireNonNull(downloadEntity(accessKey, "emltest/largemp3.mp3", "audio/mp3").getBody()).length, is(443926));
+        } finally { logout(accessKey); }
     }
 
     @Test
     public void awsLifeCycleTest() throws Exception {
-        AuthenticationResultType loginResult = loginUser(user1);
+        AccessKey accessKey = loginUser(user1);
         try {
-            awsLifeCycle(loginResult, "feeds/tiny.jpg", "image/jpeg");
-            awsLifeCycle(loginResult, "feeds/testpdf.zip", "application/zip");
+            awsLifeCycle(accessKey, "feeds/tiny.jpg", "image/jpeg");
+        } finally { logout(accessKey); }
 
-        } finally { logout(loginResult); }
+        accessKey = loginUser(user2);
+        try {
+            awsLifeCycle(accessKey, "feeds/testpdf.zip", "application/zip");
+        } finally { logout(accessKey); }
     }
 
-    private void awsLifeCycle(AuthenticationResultType loginResult, String keyPath, String contentType) {
+    private void awsLifeCycle(AccessKey accessKey, String keyPath, String contentType) {
         byte[] expected = readResourceBytes(DataTest.class, keyPath);
         try {
-            doPost("/api/upload/" + urlEncode(keyPath), loginResult, expected, SimpleMapResult.class);
+            doPost("/api/upload/" + urlEncode(keyPath), accessKey, expected, SimpleMapResult.class);
             safeSleep(100);
-        } catch (Exception ex) { throw new AssertionFailedError(ex.getMessage()); }
+        } catch (AssertionError ex) { ex.printStackTrace(); }
         try {
-            assertThat(downloadEntity(loginResult, keyPath, contentType).getBody(), is(expected));
-        } catch (Exception ex) { throw new AssertionFailedError(ex.getMessage()); }
+            assertThat(downloadEntity(accessKey, keyPath, contentType).getBody(), is(expected));
+        } catch (AssertionError ex) { ex.printStackTrace(); }
         try {
-            doDelete("/api/delete/" + urlEncode(keyPath), loginResult);
+            doDelete("/api/delete/" + urlEncode(keyPath), accessKey);
             safeSleep(100);
-        } catch (Exception ex) { throw new AssertionFailedError(ex.getMessage()); }
+        } catch (AssertionError ex) { ex.printStackTrace(); }
     }
 
-    private ResponseEntity<byte[]> downloadEntity(AuthenticationResultType loginResult, String path, String contentType) {
-        ResponseEntity<byte[]> responseEntity = doGet("/api/download/" + urlEncode(path), loginResult, byte[].class);
+    private ResponseEntity<byte[]> downloadEntity(AccessKey accessKey, String path, String contentType) {
+        ResponseEntity<byte[]> responseEntity = doGet("/api/download/" + urlEncode(path), accessKey, byte[].class);
         assertThat(responseEntity.getHeaders().getFirst(CONTENT_TYPE), is(contentType));
         return responseEntity;
     }

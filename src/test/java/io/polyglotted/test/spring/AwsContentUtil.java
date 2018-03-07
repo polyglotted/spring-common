@@ -14,9 +14,10 @@ abstract class AwsContentUtil {
     private static final String BINARY_STREAM = "binary/octet-stream";
     private static final MimetypesFileTypeMap MIME_MAP = new MimetypesFileTypeMap();
 
-    static ObjectMetadata contentTypeMetaData(String fileName) {
+    static ObjectMetadata contentTypeMetaData(String fileName, Long contentLength) {
         ObjectMetadata omd = new ObjectMetadata();
         omd.setContentType(MIME_MAP.getContentType(fileName));
+        if (contentLength != null) { omd.setContentLength(contentLength); }
         return omd;
     }
 

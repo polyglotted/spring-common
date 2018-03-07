@@ -1,7 +1,7 @@
 package io.polyglotted.test.spring;
 
-import com.amazonaws.services.cognitoidp.model.AuthenticationResultType;
 import io.polyglotted.common.model.MapResult.SimpleMapResult;
+import io.polyglotted.spring.security.AccessKey;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -33,21 +33,21 @@ public class CognitoLoginTest extends AbstractSpringTest {
 
     @Test
     public void authorizationFailure() throws Exception {
-        AuthenticationResultType loginResult = loginUser(user2);
+        AccessKey accessKey = loginUser(user2);
         try {
-            assertEntity(doGet("/api/sample", loginResult, SimpleMapResult.class), OK, "result", "ok");
-            assertEntity(execute("/api/sample-admin", GET, loginResult, null, SimpleMapResult.class),
+            assertEntity(doGet("/api/sample", accessKey, SimpleMapResult.class), OK, "result", "ok");
+            assertEntity(execute("/api/sample-admin", GET, accessKey, null, SimpleMapResult.class),
                 FORBIDDEN, "message", "User is not authorised to perform action.");
 
-        } finally { logout(loginResult); }
-        assertEntity(execute("/api/sample", GET, loginResult, null, SimpleMapResult.class), UNAUTHORIZED, "message", "Unauthorized");
+        } finally { logout(accessKey); }
+        assertEntity(execute("/api/sample", GET, accessKey, null, SimpleMapResult.class), UNAUTHORIZED, "message", "Unauthorized");
     }
 
     @Test
     public void loginLogoutSuccess() throws Exception {
-        AuthenticationResultType loginResult = loginUser(user1);
+        AccessKey accessKey = loginUser(user1);
         try {
-            assertEntity(doGet("/api/sample-admin", loginResult, SimpleMapResult.class), OK, "result", "admin");
-        } finally { logout(loginResult); }
+            assertEntity(doGet("/api/sample-admin", accessKey, SimpleMapResult.class), OK, "result", "admin");
+        } finally { logout(accessKey); }
     }
 }

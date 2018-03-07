@@ -8,7 +8,8 @@ import com.amazonaws.services.cognitoidp.model.AuthenticationResultType;
 import com.amazonaws.services.cognitoidp.model.GlobalSignOutRequest;
 import com.amazonaws.services.cognitoidp.model.NotAuthorizedException;
 import com.amazonaws.services.cognitoidp.model.UserNotFoundException;
-import io.polyglotted.common.model.MapResult;
+import io.polyglotted.spring.security.AccessKey;
+import io.polyglotted.spring.web.SimpleResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -19,7 +20,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import java.io.IOException;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
-import static io.polyglotted.common.model.MapResult.immutableResult;
 import static io.polyglotted.common.util.MapBuilder.simpleMap;
 import static io.polyglotted.common.util.StrUtil.notNullOrEmpty;
 import static io.polyglotted.common.util.StrUtil.safePrefix;
@@ -50,9 +50,8 @@ public class CognitoLoginController extends AbstractCognito {
     }
 
     @PostMapping(path = "/cognito/logout", produces = "application/json")
-    @ResponseBody public MapResult logout(@RequestBody AuthenticationResultType result) throws IOException {
-        checkBadRequest(notNullOrEmpty(result.getAccessToken()), "invalid accessToken");
+    public SimpleResponse logout(@RequestBody AccessKey result) throws IOException {
         cognitoClient.globalSignOut(new GlobalSignOutRequest().withAccessToken(result.getAccessToken()));
-        return immutableResult("result", "logged-out");
+        return new SimpleResponse("logged-out");
     }
 }

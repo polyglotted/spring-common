@@ -6,6 +6,7 @@ import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.ulisesbocchio.jasyptspringboot.annotation.EnableEncryptableProperties;
 import io.polyglotted.aws.config.AwsConfig;
 import io.polyglotted.aws.config.CredsProvider;
+import io.polyglotted.common.model.MapResult.SimpleMapResult;
 import io.polyglotted.spring.cognito.AbstractCognito.CognitoConfig;
 import io.polyglotted.spring.web.SimpleResponse;
 import lombok.Getter;
@@ -24,6 +25,8 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
@@ -81,7 +84,6 @@ public class CognitoDemo {
     }
 
     @Controller static class DataController {
-
         private static final String BUCKET = "steeleye-sdk-java.steeleye.co";
         @Autowired private AwsConfig awsConfig = null;
 
@@ -101,15 +103,18 @@ public class CognitoDemo {
             }
         }
 
+        @PreAuthorize("hasRole('ROLE_CURATOR')") @PutMapping(path = "/api/put/{id}")
+        public SimpleResponse put(@PathVariable("id") String id, @RequestBody SimpleMapResult mapResult) { return new SimpleResponse(mapResult); }
+
         @PreAuthorize("hasRole('ROLE_CURATOR')") @PostMapping(path = "/api/upload/{key}")
-        @ResponseBody public SimpleResponse upload(HttpServletRequest request, @PathVariable("key") String keyStr) throws IOException {
-            String key = urlDecode(keyStr);
-            createS3Client(awsConfig).putObject(BUCKET, key, request.getInputStream(), contentTypeMetaData(key));
+        public SimpleResponse upload(HttpServletRequest request, @PathVariable("key") String keyStr) throws IOException {
+            createS3Client(awsConfig).putObject(BUCKET, urlDecode(keyStr), request.getInputStream(),
+                contentTypeMetaData(keyStr, request.getContentLengthLong()));
             return SimpleResponse.OK;
         }
 
         @PreAuthorize("hasRole('ROLE_CURATOR')") @DeleteMapping(path = "/api/delete/{key}")
-        @ResponseBody public SimpleResponse delete(HttpServletRequest request, @PathVariable("key") String keyStr) throws IOException {
+        public SimpleResponse delete(HttpServletRequest request, @PathVariable("key") String keyStr) throws IOException {
             createS3Client(awsConfig).deleteObject(BUCKET, urlDecode(keyStr));
             return SimpleResponse.OK;
         }
