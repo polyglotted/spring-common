@@ -51,7 +51,7 @@ public class CognitoLoginController extends AbstractCognito {
 
     @PostMapping(path = "/cognito/logout", produces = "application/json")
     @ResponseBody public MapResult logout(@RequestBody AuthenticationResultType result) throws IOException {
-        checkBadRequest(result != null && notNullOrEmpty(result.getAccessToken()), "invalid accessToken");
+        checkBadRequest(notNullOrEmpty(result.getAccessToken()), "invalid accessToken");
         cognitoClient.globalSignOut(new GlobalSignOutRequest().withAccessToken(result.getAccessToken()));
         return immutableResult("result", "logged-out");
     }

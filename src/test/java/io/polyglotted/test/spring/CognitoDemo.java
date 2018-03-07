@@ -20,21 +20,26 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URLDecoder;
 
 import static com.amazonaws.util.IOUtils.copy;
+import static io.polyglotted.aws.common.AwsClientFactory.createS3Client;
 import static io.polyglotted.aws.common.S3Fetcher.fetchMayBeSecure;
 import static io.polyglotted.aws.common.S3Fetcher.fetchObjectMetadata;
 import static io.polyglotted.common.model.MapResult.immutableResult;
+import static io.polyglotted.common.util.EncodingUtil.urlDecode;
 import static io.polyglotted.common.util.StrUtil.safeLastSuffix;
+import static io.polyglotted.test.spring.AwsContentUtil.contentTypeMetaData;
 import static io.polyglotted.test.spring.AwsContentUtil.fetchContentType;
 
 @SuppressWarnings("unused")
@@ -80,10 +85,10 @@ public class CognitoDemo {
         private static final String BUCKET = "steeleye-sdk-java.steeleye.co";
         @Autowired private AwsConfig awsConfig = null;
 
-        @PreAuthorize("hasRole('ROLE_CURATOR')") @GetMapping(path = "/api/download/{key}")
+        @PreAuthorize("hasRole('ROLE_CONSUMER')") @GetMapping(path = "/api/download/{key}")
         public void download(HttpServletResponse response, @PathVariable("key") String keyStr,
                              @RequestParam(name = "base64", defaultValue = "false") boolean base64) throws IOException {
-            String key = URLDecoder.decode(keyStr, "utf-8");
+            String key = urlDecode(keyStr);
             ObjectMetadata metadata = fetchObjectMetadata(awsConfig, BUCKET, key);
             String contentType = fetchContentType(metadata, immutableResult(), key);
             InputStream baseStream = fetchMayBeSecure(awsConfig, BUCKET, key, metadata);
@@ -94,6 +99,19 @@ public class CognitoDemo {
                 copy(inputStream, response.getOutputStream());
                 response.flushBuffer();
             }
+        }
+
+        @PreAuthorize("hasRole('ROLE_CURATOR')") @PostMapping(path = "/api/upload/{key}")
+        @ResponseBody public SimpleResponse upload(HttpServletRequest request, @PathVariable("key") String keyStr) throws IOException {
+            String key = urlDecode(keyStr);
+            createS3Client(awsConfig).putObject(BUCKET, key, request.getInputStream(), contentTypeMetaData(key));
+            return SimpleResponse.OK;
+        }
+
+        @PreAuthorize("hasRole('ROLE_CURATOR')") @DeleteMapping(path = "/api/delete/{key}")
+        @ResponseBody public SimpleResponse delete(HttpServletRequest request, @PathVariable("key") String keyStr) throws IOException {
+            createS3Client(awsConfig).deleteObject(BUCKET, urlDecode(keyStr));
+            return SimpleResponse.OK;
         }
     }
 }
