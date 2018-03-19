@@ -1,7 +1,7 @@
 package io.polyglotted.test.spring;
 
+import io.polyglotted.common.model.AuthToken;
 import io.polyglotted.common.model.MapResult.SimpleMapResult;
-import io.polyglotted.spring.security.AccessKey;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -33,21 +33,21 @@ public class CognitoLoginTest extends AbstractSpringTest {
 
     @Test
     public void authorizationFailure() throws Exception {
-        AccessKey accessKey = loginUser(user2);
+        AuthToken token = loginUser(user2);
         try {
-            assertEntity(doGet("/api/sample", accessKey, SimpleMapResult.class), OK, "result", "ok");
-            assertEntity(execute("/api/sample-admin", GET, accessKey, null, SimpleMapResult.class),
+            assertEntity(doGet("/api/sample", token, SimpleMapResult.class), OK, "result", "ok");
+            assertEntity(execute("/api/sample-admin", GET, token, null, SimpleMapResult.class),
                 FORBIDDEN, "message", "User is not authorised to perform action.");
 
-        } finally { logout(accessKey); }
-        assertEntity(execute("/api/sample", GET, accessKey, null, SimpleMapResult.class), UNAUTHORIZED, "message", "Unauthorized");
+        } finally { logout(token); }
+        assertEntity(execute("/api/sample", GET, token, null, SimpleMapResult.class), UNAUTHORIZED, "message", "Unauthorized");
     }
 
     @Test
     public void loginLogoutSuccess() throws Exception {
-        AccessKey accessKey = loginUser(user1);
+        AuthToken token = loginUser(user1);
         try {
-            assertEntity(doGet("/api/sample-admin", accessKey, SimpleMapResult.class), OK, "result", "admin");
-        } finally { logout(accessKey); }
+            assertEntity(doGet("/api/sample-admin", token, SimpleMapResult.class), OK, "result", "admin");
+        } finally { logout(token); }
     }
 }

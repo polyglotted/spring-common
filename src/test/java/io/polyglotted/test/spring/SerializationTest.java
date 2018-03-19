@@ -39,11 +39,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static io.polyglotted.common.model.AuthToken.tokenBuilder;
+import static io.polyglotted.common.model.Subject.subjectBuilder;
 import static io.polyglotted.common.util.BaseSerializer.deserialize;
 import static io.polyglotted.common.util.BaseSerializer.serialize;
 import static io.polyglotted.common.util.BaseSerializer.serializeBytes;
-import static io.polyglotted.common.util.ObjConstructor.construct;
-import static io.polyglotted.common.util.ReflectionUtil.create;
 import static io.polyglotted.common.util.UuidUtil.uuidFrom;
 import static io.polyglotted.test.spring.SerializationTest.MyConst.BAZ;
 import static java.time.ZoneOffset.UTC;
@@ -79,7 +79,13 @@ public class SerializationTest {
             {
                 new RefClass().simplified(new Simplified().email("b@c.io")).simples(ImmutableList.of(new SimpleClass().aString("oui"),
                     new SimpleClass().aDate(LocalDate.of(2017, 1, 25)))).schemeMap(ImmutableMap.of(BAZ, new SimpleClass().anInt(25)))
-            }
+            },
+            {
+                subjectBuilder().usernameMd5("foo.bar.baz","mister@misty.co").role("my_role1").metadata("mfaEnabled", false).build()
+            },
+            {
+                tokenBuilder().accessToken("y7nvAiCrpP8HRJkxgdb3s3T4").expiresIn(1200).tokenType("Bearer").refreshToken("fooBarBaz").build()
+            },
         };
     }
 
@@ -87,20 +93,13 @@ public class SerializationTest {
     public void serialiseNative(Object expected) throws Exception {
         String json = serialize(objectMapper, expected);
         assertThat("\n" + json + "\n" + serialize(expected), json, is(serialize(expected)));
-
         Object actual = deserialize(objectMapper, json, expected.getClass());
         assertThat(json, actual, is(expected));
-
-        MapResult mapResult = deserialize(objectMapper, json);
-        assertThat(serialize(objectMapper, mapResult), json, is(serialize(objectMapper, mapResult)));
     }
 
     @Test @Parameters(method = "objInputs")
     public void serializeAndConstruct(Object expected) throws Exception {
         byte[] bytes = serializeBytes(objectMapper, expected);
-        Object actual = construct(deserialize(objectMapper, bytes), create(expected.getClass()));
-        assertThat(serialize(objectMapper, actual), actual, is(expected));
-
         MapResult mapResult = deserialize(objectMapper, bytes);
         assertThat(serialize(objectMapper, mapResult), bytes, is(serializeBytes(objectMapper, mapResult)));
     }
@@ -117,8 +116,6 @@ public class SerializationTest {
     public void serializeStrAsDateLong(String json, Object expected) throws Exception {
         Object actual = deserialize(objectMapper, json, expected.getClass());
         assertThat(json, actual, is(expected));
-        Object actual2 = construct(deserialize(objectMapper, json), create(expected.getClass()));
-        assertThat(json, actual2, is(expected));
     }
 
     @Test
@@ -128,9 +125,7 @@ public class SerializationTest {
         assertThat(json, deserialize(objectMapper, json, Simplified.class), is(new Simplified()));
     }
 
-    enum MyConst {
-        FOO, BAR, BAZ
-    }
+    enum MyConst { BAZ }
 
     @Accessors(fluent = true, chain = true)
     @Setter @EqualsAndHashCode

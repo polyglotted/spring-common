@@ -1,5 +1,6 @@
 package io.polyglotted.spring.security;
 
+import io.polyglotted.common.model.Subject;
 import lombok.Getter;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
@@ -10,9 +11,9 @@ public class DefaultAuthToken extends AbstractAuthenticationToken {
     @Getter private final Object principal;
     @Getter private final Object credentials;
 
-    public DefaultAuthToken(Principal principal, String credentials, Collection<GrantedAuthority> authorities) {
-        super(authorities); this.principal = principal; this.credentials = credentials;
+    public DefaultAuthToken(Subject subject, String credentials, Collection<GrantedAuthority> authorities) {
+        super(authorities); this.principal = subject; this.credentials = credentials;
     }
 
-    public Principal principal() { return (Principal) principal; }
+    @SuppressWarnings("unused") public Subject subject() { return (Subject) principal; }
 }

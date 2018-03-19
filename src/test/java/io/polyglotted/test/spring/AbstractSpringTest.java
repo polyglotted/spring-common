@@ -1,7 +1,7 @@
 package io.polyglotted.test.spring;
 
+import io.polyglotted.common.model.AuthToken;
 import io.polyglotted.common.model.MapResult.SimpleMapResult;
-import io.polyglotted.spring.security.AccessKey;
 import io.polyglotted.test.spring.CognitoDemo.IntegrationUser;
 import junit.framework.AssertionFailedError;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,34 +34,26 @@ abstract class AbstractSpringTest {
     @Autowired @Qualifier("integrationUser2") IntegrationUser user2 = null;
     @Autowired TestRestTemplate restTemplate = null;
 
-    AccessKey loginUser(IntegrationUser user) {
+    AuthToken loginUser(IntegrationUser user) {
         String url = "/cognito/login?email=" + user.getEmail() + "&password=" + user.getPassword();
-        AccessKey accessKey = doPost(url, null, null, AccessKey.class).getBody();
-        assertThat(requireNonNull(accessKey).getAccessToken(), is(notNullValue()));
-        return accessKey;
+        AuthToken authToken = doPost(url, null, null, AuthToken.class).getBody();
+        assertThat(requireNonNull(authToken).accessToken, is(notNullValue()));
+        return authToken;
     }
 
-    void logout(AccessKey accessKey) {
-        assertEntity(doPost("/cognito/logout", null, accessKey, SimpleMapResult.class), OK, "result", "logged-out");
-    }
+    void logout(AuthToken token) { assertEntity(doPost("/cognito/logout", null, token, SimpleMapResult.class), OK, "result", "logged-out"); }
 
-    <T> ResponseEntity<T> doGet(String url, AccessKey key, Class<T> clazz) {
-        return checkSuccess(execute(url, GET, key, null, clazz));
-    }
+    <T> ResponseEntity<T> doGet(String url, AuthToken key, Class<T> clazz) { return checkSuccess(execute(url, GET, key, null, clazz)); }
 
-    <T> ResponseEntity<T> doPost(String url, AccessKey key, Object body, Class<T> clazz) {
-        return checkSuccess(execute(url, POST, key, body, clazz));
-    }
+    <T> ResponseEntity<T> doPost(String url, AuthToken key, Object body, Class<T> clazz) { return checkSuccess(execute(url, POST, key, body, clazz)); }
 
-    <T> ResponseEntity<T> doPut(String url, AccessKey key, Object body, Class<T> clazz) {
-        return checkSuccess(execute(url, PUT, key, body, clazz));
-    }
+    <T> ResponseEntity<T> doPut(String url, AuthToken key, Object body, Class<T> clazz) { return checkSuccess(execute(url, PUT, key, body, clazz)); }
 
-    void doDelete(String url, AccessKey key) { checkSuccess(execute(url, DELETE, key, null, SimpleMapResult.class)); }
+    void doDelete(String url, AuthToken key) { checkSuccess(execute(url, DELETE, key, null, SimpleMapResult.class)); }
 
-    <T> ResponseEntity<T> execute(String url, HttpMethod method, AccessKey key, Object body, Class<T> clazz) {
+    <T> ResponseEntity<T> execute(String url, HttpMethod method, AuthToken token, Object body, Class<T> clazz) {
         HttpHeaders headers = new HttpHeaders(); headers.setAccept(immutableList(MediaType.APPLICATION_JSON));
-        if (key != null) { headers.add(HttpHeaders.AUTHORIZATION, "Bearer " + key.getAccessToken()); }
+        if (token != null) { headers.add(HttpHeaders.AUTHORIZATION, "Bearer " + token.accessToken); }
         return restTemplate.exchange(url, method, new HttpEntity<>(body, headers), clazz);
     }
 

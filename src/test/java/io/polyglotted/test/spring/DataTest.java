@@ -1,8 +1,8 @@
 package io.polyglotted.test.spring;
 
+import io.polyglotted.common.model.AuthToken;
 import io.polyglotted.common.model.MapResult;
 import io.polyglotted.common.model.MapResult.SimpleMapResult;
-import io.polyglotted.spring.security.AccessKey;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +22,7 @@ public class DataTest extends AbstractSpringTest {
 
     @Test
     public void defaultPutTest() throws Exception {
-        AccessKey accessKey = loginUser(user2);
+        AuthToken accessKey = loginUser(user2);
         try {
             MapResult expected = simpleResult("baz", 1, "foo", "bar");
             ResponseEntity<SimpleMapResult> result = doPut("/api/put/test", accessKey, expected, SimpleMapResult.class);
@@ -34,48 +34,48 @@ public class DataTest extends AbstractSpringTest {
 
     @Test
     public void downloadSuccess() throws Exception {
-        AccessKey accessKey = loginUser(user1);
+        AuthToken token = loginUser(user1);
         try {
-            ResponseEntity<String> stringResp = doGet("/api/download/" + urlEncode("emltest/kmsobj123"), accessKey, String.class);
+            ResponseEntity<String> stringResp = doGet("/api/download/" + urlEncode("emltest/kmsobj123"), token, String.class);
             assertThat(stringResp.getBody(), is("hello kms"));
 
-            stringResp = doGet("/api/download/" + urlEncode("emltest/nokms.txt"), accessKey, String.class);
+            stringResp = doGet("/api/download/" + urlEncode("emltest/nokms.txt"), token, String.class);
             assertThat(stringResp.getBody(), is("no kms id"));
 
-            assertThat(requireNonNull(downloadEntity(accessKey, "emltest/largemp3.mp3", "audio/mp3").getBody()).length, is(443926));
-        } finally { logout(accessKey); }
+            assertThat(requireNonNull(downloadEntity(token, "emltest/largemp3.mp3", "audio/mp3").getBody()).length, is(443926));
+        } finally { logout(token); }
     }
 
     @Test
     public void awsLifeCycleTest() throws Exception {
-        AccessKey accessKey = loginUser(user1);
+        AuthToken token = loginUser(user1);
         try {
-            awsLifeCycle(accessKey, "feeds/tiny.jpg", "image/jpeg");
-        } finally { logout(accessKey); }
+            awsLifeCycle(token, "feeds/tiny.jpg", "image/jpeg");
+        } finally { logout(token); }
 
-        accessKey = loginUser(user2);
+        token = loginUser(user2);
         try {
-            awsLifeCycle(accessKey, "feeds/testpdf.zip", "application/zip");
-        } finally { logout(accessKey); }
+            awsLifeCycle(token, "feeds/testpdf.zip", "application/zip");
+        } finally { logout(token); }
     }
 
-    private void awsLifeCycle(AccessKey accessKey, String keyPath, String contentType) {
+    private void awsLifeCycle(AuthToken token, String keyPath, String contentType) {
         byte[] expected = readResourceBytes(DataTest.class, keyPath);
         try {
-            doPost("/api/upload/" + urlEncode(keyPath), accessKey, expected, SimpleMapResult.class);
+            doPost("/api/upload/" + urlEncode(keyPath), token, expected, SimpleMapResult.class);
             safeSleep(100);
         } catch (AssertionError ex) { ex.printStackTrace(); }
         try {
-            assertThat(downloadEntity(accessKey, keyPath, contentType).getBody(), is(expected));
+            assertThat(downloadEntity(token, keyPath, contentType).getBody(), is(expected));
         } catch (AssertionError ex) { ex.printStackTrace(); }
         try {
-            doDelete("/api/delete/" + urlEncode(keyPath), accessKey);
+            doDelete("/api/delete/" + urlEncode(keyPath), token);
             safeSleep(100);
         } catch (AssertionError ex) { ex.printStackTrace(); }
     }
 
-    private ResponseEntity<byte[]> downloadEntity(AccessKey accessKey, String path, String contentType) {
-        ResponseEntity<byte[]> responseEntity = doGet("/api/download/" + urlEncode(path), accessKey, byte[].class);
+    private ResponseEntity<byte[]> downloadEntity(AuthToken token, String path, String contentType) {
+        ResponseEntity<byte[]> responseEntity = doGet("/api/download/" + urlEncode(path), token, byte[].class);
         assertThat(responseEntity.getHeaders().getFirst(CONTENT_TYPE), is(contentType));
         return responseEntity;
     }

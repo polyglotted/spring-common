@@ -24,11 +24,16 @@ public class CognitoAuthFilter extends OncePerRequestFilter {
             authentication = cognitoProcessor.authenticate(request);
             if (authentication != null) { SecurityContextHolder.getContext().setAuthentication(authentication); }
 
+        } catch (NotCognitoException ignored) { // DO NOTHING
         } catch (AWSCognitoIdentityProviderException ex) {
             log.error("IDP Error processing Bearer token " + ex.getMessage());
             SecurityContextHolder.clearContext();
 
         } catch (Exception ex) { log.error("Unknown Error processing Bearer token", ex); }
         filterChain.doFilter(request, response);
+    }
+
+    static class NotCognitoException extends RuntimeException {
+        NotCognitoException(String message) { super(message); }
     }
 }

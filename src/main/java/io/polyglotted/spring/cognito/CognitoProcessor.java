@@ -5,14 +5,14 @@ import com.amazonaws.services.cognitoidp.model.AttributeType;
 import com.amazonaws.services.cognitoidp.model.GetUserRequest;
 import com.amazonaws.services.cognitoidp.model.GetUserResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ImmutableList;
 import io.polyglotted.common.model.MapResult;
-import io.polyglotted.common.model.MapResult.SimpleMapResult;
+import io.polyglotted.common.model.Subject;
+import io.polyglotted.spring.cognito.CognitoAuthFilter.NotCognitoException;
 import io.polyglotted.spring.security.DefaultAuthToken;
-import io.polyglotted.spring.security.Principal;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletRequest;
@@ -20,8 +20,9 @@ import java.util.List;
 
 import static com.google.common.collect.Lists.transform;
 import static io.polyglotted.common.model.MapResult.simpleResult;
+import static io.polyglotted.common.model.Subject.subjectBuilder;
+import static io.polyglotted.common.util.BaseSerializer.deserialize;
 import static io.polyglotted.common.util.MapRetriever.listVal;
-import static io.polyglotted.common.util.MapRetriever.removeVal;
 import static java.util.Locale.ENGLISH;
 import static org.apache.commons.codec.binary.Base64.decodeBase64;
 import static org.apache.http.HttpHeaders.AUTHORIZATION;
@@ -36,37 +37,32 @@ public class CognitoProcessor extends AbstractCognito {
         String header = request.getHeader(AUTHORIZATION);
         if (header != null && header.startsWith("Bearer")) {
             String bearerToken = header.substring(7);
-            Principal principal = enhance(getUser(bearerToken), bearerToken).build();
-            return new DefaultAuthToken(principal, bearerToken, principal.authorities());
+            List<String> roles = fetchRoles(bearerToken);
+            return new DefaultAuthToken(getUser(bearerToken).roles(roles).build(), bearerToken, authorities(roles));
         }
         log.trace("No Bearer token found in HTTP Authorization header");
         return null;
     }
 
-    private Principal.Builder getUser(String accessToken) {
+    private Subject.Builder getUser(String accessToken) {
         GetUserResult user = cognitoClient.getUser(new GetUserRequest().withAccessToken(accessToken));
-
-        MapResult attributeMap = simpleResult();
-        for (AttributeType type : user.getUserAttributes()) { attributeMap.put(type.getName().toLowerCase(ENGLISH), type.getValue()); }
-        return Principal.builder().userId(removeVal(attributeMap, "sub")).fillFrom(attributeMap);
+        MapResult attributes = simpleResult();
+        for (AttributeType type : user.getUserAttributes()) { attributes.put(type.getName().toLowerCase(ENGLISH), type.getValue()); }
+        return subjectBuilder().username(attributes.removeVal("sub")).email(attributes.optStr("email"))
+            .fullName(attributes.optStr("name")).metadata(attributes);
     }
 
-    private Principal.Builder enhance(Principal.Builder builder, String token) {
-        MapResult jwt = parseJwt(token);
-        return builder.expiry(asTime(jwt, "exp")).issuedAt(asTime(jwt, "iat")).roles(ImmutableList.copyOf(roles(jwt)));
-    }
-
-    @SneakyThrows private MapResult parseJwt(String token) {
+    private List<String> fetchRoles(String token) {
         String[] parts = token.split("\\.");
-        if (parts.length != 3) { throw new IllegalArgumentException("invalid token parts"); }
-        return objectMapper.readValue(decodeBase64(parts[1]), SimpleMapResult.class);
+        if (parts.length != 3) { throw new NotCognitoException("invalid token parts"); }
+        return rolesFrom(deserialize(objectMapper, decodeBase64(parts[1])));
     }
 
-    private static List<String> roles(MapResult map) { return transform(listVal(map, "cognito:groups"), CognitoProcessor::groupToRole); }
+    private static List<String> rolesFrom(MapResult map) { return transform(listVal(map, "cognito:groups"), CognitoProcessor::groupToRole); }
 
     private static String groupToRole(String group) { return group.startsWith("ABACI_") ? group.substring(6) : group; }
 
-    private static Long asTime(MapResult map, String prop) {
-        Integer integer = (Integer) map.get(prop); return integer == null ? null : integer.longValue() * 1000;
+    private static List<GrantedAuthority> authorities(List<String> roles) {
+        return transform(roles, role -> new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()));
     }
 }
