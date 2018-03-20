@@ -20,9 +20,8 @@ final class ElasticHandler implements Closeable {
     private final CloseableHttpClient httpClient = HttpClientBuilder.create().setDefaultRequestConfig(RequestConfig.custom()
         .setConnectTimeout(3000).setSocketTimeout(3000).build()).build();
 
+    @PreDestroy @Override public void close() throws IOException { httpClient.close(); }
+
     void simpleGet(String endpoint, Header authHeader) {
     }
-
-
-    @PreDestroy @Override public void close() throws IOException { httpClient.close(); }
 }
