@@ -12,10 +12,9 @@ import io.polyglotted.common.model.AuthToken;
 import io.polyglotted.spring.web.SimpleResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
 
@@ -26,14 +25,13 @@ import static io.polyglotted.common.util.StrUtil.safePrefix;
 import static io.polyglotted.spring.errorhandling.ExceptionFactory.checkBadRequest;
 import static io.polyglotted.spring.errorhandling.ExceptionFactory.unauthorisedException;
 
-@Slf4j @Controller
-@SuppressWarnings({"unused", "WeakerAccess"})
+@SuppressWarnings({"unused", "WeakerAccess"}) @Slf4j @RestController
 public class CognitoLoginController extends AbstractCognito {
 
     @Autowired public CognitoLoginController(CognitoConfig config, AWSCognitoIdentityProvider cognitoClient) { super(config, cognitoClient); }
 
     @PostMapping(path = "/cognito/login", params = {"email", "password"}, produces = "application/json")
-    @ResponseBody public AuthenticationResultType login(String email, String password) throws IOException {
+    public AuthenticationResultType login(String email, String password) throws IOException {
         checkBadRequest(notNullOrEmpty(email) && notNullOrEmpty(password), "Invalid credentials.");
         try {
             AdminInitiateAuthRequest authRequest = new AdminInitiateAuthRequest()

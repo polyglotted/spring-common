@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -73,14 +73,14 @@ public class CognitoDemo {
         private String password;
     }
 
-    @Controller static class SampleController {
+    @RestController static class SampleController {
         @PreAuthorize("hasRole('ROLE_CONSUMER') or hasRole('ROLE_CURATOR')")
         @GetMapping(path = "/api/sample", produces = "application/json")
-        @ResponseBody public SimpleResponse sample() { return SimpleResponse.OK; }
+        public SimpleResponse sample() { return SimpleResponse.OK; }
 
         @PreAuthorize("hasRole('ROLE_ADMINISTRATOR')")
         @GetMapping(path = "/api/sample-admin", produces = "application/json")
-        @ResponseBody public SimpleResponse sampleAdmin() { return new SimpleResponse(immutableResult("result", "admin")); }
+        public SimpleResponse sampleAdmin() { return new SimpleResponse(immutableResult("result", "admin")); }
     }
 
     @Controller static class DataController {
