@@ -8,6 +8,7 @@ import io.polyglotted.aws.config.AwsConfig;
 import io.polyglotted.aws.config.CredsProvider;
 import io.polyglotted.common.model.MapResult.SimpleMapResult;
 import io.polyglotted.spring.cognito.AbstractCognito.CognitoConfig;
+import io.polyglotted.spring.security.DefaultAuthToken;
 import io.polyglotted.spring.web.SimpleResponse;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -34,6 +35,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.Principal;
 
 import static com.amazonaws.util.IOUtils.copy;
 import static io.polyglotted.aws.common.AwsClientFactory.createS3Client;
@@ -71,16 +73,18 @@ public class CognitoDemo {
     static class IntegrationUser {
         private String email;
         private String password;
+
+        IntegrationUser(String email, String passwd) { this.email = email; this.password = passwd; }
     }
 
     @RestController static class SampleController {
         @PreAuthorize("hasRole('ROLE_CONSUMER') or hasRole('ROLE_CURATOR')")
         @GetMapping(path = "/api/sample", produces = "application/json")
-        public SimpleResponse sample() { return SimpleResponse.OK; }
+        public SimpleResponse sample(Principal subject) { return SimpleResponse.OK; }
 
         @PreAuthorize("hasRole('ROLE_ADMINISTRATOR')")
         @GetMapping(path = "/api/sample-admin", produces = "application/json")
-        public SimpleResponse sampleAdmin() { return new SimpleResponse(immutableResult("result", "admin")); }
+        public SimpleResponse sampleAdmin(DefaultAuthToken token) { return new SimpleResponse(immutableResult("result", "admin")); }
     }
 
     @Controller static class DataController {

@@ -2,7 +2,10 @@ package io.polyglotted.spring.security;
 
 import io.polyglotted.spring.cognito.CognitoAuthFilter;
 import io.polyglotted.spring.cognito.CognitoProcessor;
+import io.polyglotted.spring.elastic.ElasticAuthFilter;
+import io.polyglotted.spring.elastic.ElasticProcessor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
@@ -18,14 +21,24 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.List;
+
 import static io.polyglotted.common.util.ListBuilder.immutableList;
+import static org.springframework.util.StringUtils.toStringArray;
 
 @EnableWebSecurity @SuppressWarnings("unused")
 @EnableGlobalMethodSecurity(securedEnabled = true, prePostEnabled = true)
 public class DefaultSecurityConfigurer extends WebSecurityConfigurerAdapter {
     @Autowired private final DefaultAuthProvider defaultAuthProvider = null;
     @Autowired private CognitoProcessor cognitoProcessor = null;
+    @Autowired private ElasticProcessor elasticProcessor = null;
     @Autowired private RestAuthEntryPoint restAuthEntryPoint = null;
+
+    @Value("#{'${spring.authorised.endpoints:/api/**}'.split(',')}") private List<String> authorisedEndpoints = immutableList();
+    @Value("#{'${spring.unauthorised.endpoints}'.split(',')}") private List<String> unauthorisedEndpoints = immutableList();
+    @Value("#{'${spring.cors.headers:Authorization,Cache-Control,Content-Type,DNT,If-Modified-Since,Keep-Alive," +
+        "User-Agent,X-Requested-With,X-Proxy-User,X-Session-Token,X-Realm,X-Real-IP,X-Forwarded-For}'.split(',')}")
+    private List<String> corsHeaders = immutableList();
 
     @Override public void configure(AuthenticationManagerBuilder auth) throws Exception { auth.authenticationProvider(defaultAuthProvider); }
 
@@ -45,13 +58,12 @@ public class DefaultSecurityConfigurer extends WebSecurityConfigurerAdapter {
             .authenticationEntryPoint(restAuthEntryPoint)
           .and()
             .authorizeRequests()
-                .antMatchers("/").permitAll()
-                .antMatchers("/cognito/login").permitAll()
-                .antMatchers("/cognito/logout").permitAll()
-                .antMatchers("/api/**").authenticated()
+                .antMatchers(toStringArray(unauthorisedEndpoints)).permitAll()
+                .antMatchers(toStringArray(authorisedEndpoints)).authenticated()
                 .anyRequest().authenticated()
           .and()
             .addFilterBefore(new CognitoAuthFilter(cognitoProcessor), BasicAuthenticationFilter.class)
+            .addFilterBefore(new ElasticAuthFilter(elasticProcessor), BasicAuthenticationFilter.class)
             .formLogin();
         // @formatter:on
     }
@@ -60,9 +72,7 @@ public class DefaultSecurityConfigurer extends WebSecurityConfigurerAdapter {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(immutableList("*"));
         configuration.setAllowedMethods(immutableList("GET", "POST", "PUT", "DELETE", "HEAD", "OPTIONS"));
-        configuration.setAllowedHeaders(immutableList("Authorization", "Cache-Control", "Content-Type",
-            "DNT", "If-Modified-Since", "Keep-Alive", "User-Agent", "X-Requested-With", "X-Proxy-User",
-            "X-Session-Token", "X-Realm", "X-Real-IP", "X-Forwarded-For"));
+        configuration.setAllowedHeaders(corsHeaders);
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

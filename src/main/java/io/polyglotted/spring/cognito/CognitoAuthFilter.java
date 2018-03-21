@@ -4,6 +4,7 @@ import com.amazonaws.services.cognitoidp.model.AWSCognitoIdentityProviderExcepti
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -19,17 +20,18 @@ public class CognitoAuthFilter extends OncePerRequestFilter {
 
     @Override protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
         throws ServletException, IOException {
-        Authentication authentication;
-        try {
-            authentication = cognitoProcessor.authenticate(request);
-            if (authentication != null) { SecurityContextHolder.getContext().setAuthentication(authentication); }
+        SecurityContext context = SecurityContextHolder.getContext();
+        Authentication authentication = context.getAuthentication();
+        if (authentication == null) {
+            try {
+                authentication = cognitoProcessor.authenticate(request);
+                if (authentication != null) { context.setAuthentication(authentication); }
 
-        } catch (NotCognitoException ignored) { // DO NOTHING
-        } catch (AWSCognitoIdentityProviderException ex) {
-            log.error("IDP Error processing Bearer token " + ex.getMessage());
-            SecurityContextHolder.clearContext();
-
-        } catch (Exception ex) { log.error("Unknown Error processing Bearer token", ex); }
+            } catch (NotCognitoException ignored) { // DO NOTHING
+            } catch (AWSCognitoIdentityProviderException ignored) {
+                SecurityContextHolder.clearContext();
+            } catch (Exception ex) { log.error("Unknown Error processing Bearer token", ex); }
+        }
         filterChain.doFilter(request, response);
     }
 

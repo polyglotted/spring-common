@@ -12,8 +12,6 @@ public class DefaultAuthToken extends AbstractAuthenticationToken {
     @Getter private final Object credentials;
 
     public DefaultAuthToken(Subject subject, String credentials, Collection<GrantedAuthority> authorities) {
-        super(authorities); this.principal = subject; this.credentials = credentials;
+        super(authorities); super.setAuthenticated(true); this.principal = subject; this.credentials = credentials;
     }
-
-    @SuppressWarnings("unused") public Subject subject() { return (Subject) principal; }
 }

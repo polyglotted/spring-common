@@ -3,6 +3,7 @@ package io.polyglotted.spring.elastic;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -18,15 +19,16 @@ public class ElasticAuthFilter extends OncePerRequestFilter {
 
     @Override protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
         throws ServletException, IOException {
-        Authentication authentication;
-        try {
-            authentication = elasticProcessor.authenticate(request);
-            if (authentication != null) { SecurityContextHolder.getContext().setAuthentication(authentication); }
-
-        } catch (ElasticClientException ex) {
-            SecurityContextHolder.clearContext();
-
-        } catch (Exception ex) { log.error("Unknown Error processing Bearer token", ex); }
+        SecurityContext context = SecurityContextHolder.getContext();
+        Authentication authentication = context.getAuthentication();
+        if (authentication == null) {
+            try {
+                authentication = elasticProcessor.authenticate(request);
+                if (authentication != null) { context.setAuthentication(authentication); }
+            } catch (ElasticClientException ignored) { //DO NOTHING
+                SecurityContextHolder.clearContext();
+            } catch (Exception ex) { log.error("Unknown Error processing Bearer token", ex); }
+        }
         filterChain.doFilter(request, response);
     }
 
