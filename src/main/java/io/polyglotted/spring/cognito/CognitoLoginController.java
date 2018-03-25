@@ -18,9 +18,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
 
-import static com.google.common.base.Strings.isNullOrEmpty;
 import static io.polyglotted.common.util.MapBuilder.simpleMap;
 import static io.polyglotted.common.util.StrUtil.notNullOrEmpty;
+import static io.polyglotted.common.util.StrUtil.nullOrEmpty;
 import static io.polyglotted.common.util.StrUtil.safePrefix;
 import static io.polyglotted.spring.errorhandling.ExceptionFactory.checkBadRequest;
 import static io.polyglotted.spring.errorhandling.ExceptionFactory.unauthorisedException;
@@ -39,7 +39,7 @@ public class CognitoLoginController extends AbstractCognito {
                     "SECRET_HASH", config.getClientSecret())).withClientId(config.getClientId()).withUserPoolId(config.getUserPoolId());
             AdminInitiateAuthResult authResponse = cognitoClient.adminInitiateAuth(authRequest);
 
-            if (isNullOrEmpty(authResponse.getChallengeName())) { return authResponse.getAuthenticationResult(); }
+            if (nullOrEmpty(authResponse.getChallengeName())) { return authResponse.getAuthenticationResult(); }
             throw unauthorisedException("Unexpected challenge on signin: " + authResponse.getChallengeName() + ".");
 
         } catch (UserNotFoundException | NotAuthorizedException ex) {

@@ -18,10 +18,10 @@ import org.springframework.stereotype.Component;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
-import static com.google.common.collect.Lists.transform;
 import static io.polyglotted.common.model.MapResult.simpleResult;
 import static io.polyglotted.common.model.Subject.subjectBuilder;
 import static io.polyglotted.common.util.BaseSerializer.deserialize;
+import static io.polyglotted.common.util.CollUtil.transformList;
 import static io.polyglotted.common.util.MapRetriever.listVal;
 import static java.util.Locale.ENGLISH;
 import static org.apache.commons.codec.binary.Base64.decodeBase64;
@@ -58,11 +58,11 @@ public class CognitoProcessor extends AbstractCognito {
         return rolesFrom(deserialize(objectMapper, decodeBase64(parts[1])));
     }
 
-    private static List<String> rolesFrom(MapResult map) { return transform(listVal(map, "cognito:groups"), CognitoProcessor::groupToRole); }
+    private static List<String> rolesFrom(MapResult map) { return transformList(listVal(map, "cognito:groups"), CognitoProcessor::groupToRole); }
 
     private static String groupToRole(String group) { return group.startsWith("ABACI_") ? group.substring(6) : group; }
 
     private static List<GrantedAuthority> authorities(List<String> roles) {
-        return transform(roles, role -> new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()));
+        return transformList(roles, role -> new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()));
     }
 }

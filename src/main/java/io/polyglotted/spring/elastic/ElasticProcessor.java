@@ -21,7 +21,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
 
-import static com.google.common.collect.Lists.transform;
+import static io.polyglotted.common.util.CollUtil.transformList;
 import static io.polyglotted.common.util.HttpUtil.buildDelete;
 import static io.polyglotted.common.util.HttpUtil.buildGet;
 import static io.polyglotted.common.util.HttpUtil.buildPost;
@@ -71,6 +71,6 @@ public class ElasticProcessor implements Closeable {
     private static List<GrantedAuthority> authorities(List<String> roles) {
         return ListBuilder.<GrantedAuthority>immutableListBuilder()
             .add(new SimpleGrantedAuthority("ROLE_CONSUMER")).add(new SimpleGrantedAuthority("ROLE_CURATOR"))
-            .addAll(transform(roles, role -> new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()))).build();
+            .addAll(transformList(roles, role -> new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()))).build();
     }
 }
