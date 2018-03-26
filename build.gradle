@@ -26,7 +26,7 @@ repositories {
 }
 ext {
     attoParserVersion = '2.0.4.RELEASE'
-    awsCommonVersion = '1.11.289'
+    awsCommonVersion = '1.11.301-SNAPSHOT'
     base64Version = '2.3.9'
     classmateVersion = '1.3.1'
     hamcrestVersion = '1.3'

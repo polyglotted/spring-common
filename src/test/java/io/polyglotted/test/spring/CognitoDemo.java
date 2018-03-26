@@ -39,13 +39,13 @@ import java.security.Principal;
 
 import static com.amazonaws.util.IOUtils.copy;
 import static io.polyglotted.aws.common.AwsClientFactory.createS3Client;
+import static io.polyglotted.aws.common.AwsContentUtil.contentTypeMetaData;
+import static io.polyglotted.aws.common.AwsContentUtil.fetchContentType;
 import static io.polyglotted.aws.common.S3Fetcher.fetchMayBeSecure;
 import static io.polyglotted.aws.common.S3Fetcher.fetchObjectMetadata;
 import static io.polyglotted.common.model.MapResult.immutableResult;
 import static io.polyglotted.common.util.EncodingUtil.urlDecode;
 import static io.polyglotted.common.util.StrUtil.safeLastSuffix;
-import static io.polyglotted.test.spring.AwsContentUtil.contentTypeMetaData;
-import static io.polyglotted.test.spring.AwsContentUtil.fetchContentType;
 
 @SuppressWarnings("unused")
 @ComponentScan({"io.polyglotted.spring"})
