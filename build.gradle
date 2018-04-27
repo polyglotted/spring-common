@@ -25,7 +25,7 @@ repositories {
 }
 ext {
     attoParserVersion = '2.0.4.RELEASE' //locked-thymeleaf
-    awsCommonVersion = '1.11.309'
+    awsCommonVersion = '1.11.316'
     base64Version = '2.3.9'
     classmateVersion = '1.4.0'
     hamcrestVersion = '1.3'
@@ -44,7 +44,7 @@ ext {
     tomcatVersion = '9.0.6'
     thymeleafVersion = '3.0.9.RELEASE'
     unbescapeVersion = '1.1.5.RELEASE' //locked-thymeleaf
-    utilsCommonVersion = '1.0.13'
+    utilsCommonVersion = '1.0.15'
     validationApiVersion = '2.0.1.Final'
 }
 
