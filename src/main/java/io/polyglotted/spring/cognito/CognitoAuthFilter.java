@@ -35,7 +35,7 @@ public class CognitoAuthFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    public static class NotCognitoException extends RuntimeException {
+    static class NotCognitoException extends RuntimeException {
         NotCognitoException(String message) { super(message); }
     }
 }

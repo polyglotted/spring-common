@@ -1,12 +1,11 @@
 package io.polyglotted.test.spring;
 
 import com.amazonaws.services.cognitoidp.AWSCognitoIdentityProvider;
-import com.amazonaws.services.cognitoidp.AWSCognitoIdentityProviderClient;
 import com.amazonaws.services.cognitoidp.model.AuthenticationResultType;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.ulisesbocchio.jasyptspringboot.annotation.EnableEncryptableProperties;
+import io.polyglotted.aws.common.AwsClientFactory;
 import io.polyglotted.aws.config.AwsConfig;
-import io.polyglotted.aws.config.CredsProvider;
 import io.polyglotted.common.model.AuthToken;
 import io.polyglotted.common.model.MapResult.SimpleMapResult;
 import io.polyglotted.spring.cognito.CognitoConfig;
@@ -66,9 +65,7 @@ public class CognitoDemo {
     @Bean(name = "integrationUser2") @ConfigurationProperties("spc.intg.user2")
     public IntegrationUser integrationUser2() { return new IntegrationUser(); }
 
-    @Bean public AWSCognitoIdentityProvider cognitoClient(AwsConfig config) {
-        return AWSCognitoIdentityProviderClient.builder().withCredentials(CredsProvider.getProvider(config)).withRegion(config.regions()).build();
-    }
+    @Bean public AWSCognitoIdentityProvider cognitoClient(AwsConfig config) { return AwsClientFactory.cognitoClient(config); }
 
     public static void main(String args[]) { SpringApplication.run(CognitoDemo.class, args); }
 

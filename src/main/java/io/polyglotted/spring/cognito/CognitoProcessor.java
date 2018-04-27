@@ -73,6 +73,8 @@ public class CognitoProcessor {
     }
 
     DefaultAuthToken authenticate(HttpServletRequest request) {
+        if (config.disabled()) { return null; }
+
         String header = request.getHeader(AUTHORIZATION);
         if (header != null && header.startsWith("Bearer")) {
             String bearerToken = header.substring(7);
