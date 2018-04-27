@@ -2,12 +2,16 @@ package io.polyglotted.test.spring;
 
 import com.amazonaws.services.cognitoidp.AWSCognitoIdentityProvider;
 import com.amazonaws.services.cognitoidp.AWSCognitoIdentityProviderClient;
+import com.amazonaws.services.cognitoidp.model.AuthenticationResultType;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.ulisesbocchio.jasyptspringboot.annotation.EnableEncryptableProperties;
 import io.polyglotted.aws.config.AwsConfig;
 import io.polyglotted.aws.config.CredsProvider;
+import io.polyglotted.common.model.AuthToken;
 import io.polyglotted.common.model.MapResult.SimpleMapResult;
 import io.polyglotted.spring.cognito.CognitoConfig;
+import io.polyglotted.spring.cognito.CognitoProcessor;
+import io.polyglotted.spring.elastic.ElasticProcessor;
 import io.polyglotted.spring.security.DefaultAuthToken;
 import io.polyglotted.spring.web.SimpleResponse;
 import lombok.Getter;
@@ -21,7 +25,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -87,7 +90,7 @@ public class CognitoDemo {
         public SimpleResponse sampleAdmin(DefaultAuthToken token) { return new SimpleResponse(immutableResult("result", "admin")); }
     }
 
-    @Controller static class DataController {
+    @RestController static class DataController {
         private static final String BUCKET = "steeleye-sdk-java.steeleye.co";
         @Autowired private AwsConfig awsConfig = null;
 
@@ -122,5 +125,25 @@ public class CognitoDemo {
             createS3Client(awsConfig).deleteObject(BUCKET, urlDecode(keyStr));
             return SimpleResponse.OK;
         }
+    }
+
+    @RestController static class CognitoLoginController {
+        @Autowired private CognitoProcessor cognitoProcessor = null;
+
+        @PostMapping(path = "/cognito/login", params = {"email", "password"}, produces = "application/json")
+        public AuthenticationResultType login(String email, String password) throws IOException { return cognitoProcessor.login(email, password); }
+
+        @PostMapping(path = "/cognito/logout", produces = "application/json")
+        public SimpleResponse logout(@RequestBody AuthToken result) throws IOException { return cognitoProcessor.logout(result); }
+    }
+
+    @RestController static class ElasticLoginController {
+        @Autowired private ElasticProcessor elasticProcessor = null;
+
+        @PostMapping(path = "/elastic/login", params = {"userId", "password"}, produces = "application/json")
+        public AuthToken login(String userId, String password) throws IOException { return elasticProcessor.login(userId, password); }
+
+        @PostMapping(path = "/elastic/logout", produces = "application/json")
+        public SimpleResponse logout(@RequestBody AuthToken result) throws IOException { return elasticProcessor.logout(result.accessToken); }
     }
 }
