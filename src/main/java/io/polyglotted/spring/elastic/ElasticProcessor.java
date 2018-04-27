@@ -5,6 +5,7 @@ import io.polyglotted.common.model.Subject;
 import io.polyglotted.common.util.ListBuilder;
 import io.polyglotted.spring.elastic.ElasticAuthFilter.ElasticClientException;
 import io.polyglotted.spring.security.DefaultAuthToken;
+import io.polyglotted.spring.web.SimpleResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.config.RequestConfig;
@@ -26,9 +27,13 @@ import static io.polyglotted.common.util.HttpUtil.buildDelete;
 import static io.polyglotted.common.util.HttpUtil.buildGet;
 import static io.polyglotted.common.util.HttpUtil.buildPost;
 import static io.polyglotted.common.util.HttpUtil.execute;
+import static io.polyglotted.common.util.StrUtil.notNullOrEmpty;
+import static io.polyglotted.common.util.StrUtil.safePrefix;
+import static io.polyglotted.spring.errorhandling.ExceptionFactory.checkBadRequest;
+import static io.polyglotted.spring.errorhandling.ExceptionFactory.unauthorisedException;
 import static org.apache.http.HttpHeaders.AUTHORIZATION;
 
-@SuppressWarnings({"WeakerAccess"}) @Slf4j @RequiredArgsConstructor @Component
+@Slf4j @RequiredArgsConstructor @Component
 public class ElasticProcessor implements Closeable {
     private static final String LOGIN_TEMPL = "{\"grant_type\":\"password\",\"username\":\"$userid\",\"password\":\"$passwd\"}";
     private static final String LOGOUT_TEMPL = "{\"token\":\"$token\"}";
@@ -38,6 +43,24 @@ public class ElasticProcessor implements Closeable {
 
     @PreDestroy @Override public void close() throws IOException { httpClient.close(); }
 
+    public AuthToken login(String userId, String password) {
+        checkBadRequest(notNullOrEmpty(userId) && notNullOrEmpty(password), "Invalid credentials.");
+        try {
+            return AuthToken.buildWith(execute(httpClient, buildPost(baseUri, "/_xpack/security/oauth2/token").withBasicAuth(userId, password)
+                .withJson(LOGIN_TEMPL.replace("$userid", userId).replace("$passwd", password))));
+        } catch (Exception ex) {
+            log.debug("not found or invalid creds: {}", userId); throw unauthorisedException(safePrefix(ex.getMessage(), " ("));
+        }
+    }
+
+    public SimpleResponse logout(String token) {
+        try {
+            execute(httpClient, buildDelete(baseUri, "/_xpack/security/oauth2/token").withBearerAuth(token)
+                .withJson(LOGOUT_TEMPL.replace("$token", token)));
+        } catch (Exception ex) { log.warn("failed to logout " + token); }
+        return new SimpleResponse("logged-out");
+    }
+
     DefaultAuthToken authenticate(HttpServletRequest request) {
         String header = request.getHeader(AUTHORIZATION);
         if (header != null && header.startsWith("Bearer") && !header.contains(".")) {
@@ -46,20 +69,6 @@ public class ElasticProcessor implements Closeable {
         }
         log.trace("No Bearer token found in HTTP Authorization header");
         return null;
-    }
-
-    AuthToken login(String userId, String password) {
-        try {
-            return AuthToken.buildWith(execute(httpClient, buildPost(baseUri, "/_xpack/security/oauth2/token").withBasicAuth(userId, password)
-                .withJson(LOGIN_TEMPL.replace("$userid", userId).replace("$passwd", password))));
-        } catch (Exception ex) { throw new ElasticClientException("failed to login"); }
-    }
-
-    void logout(String token) {
-        try {
-            execute(httpClient, buildDelete(baseUri, "/_xpack/security/oauth2/token").withBearerAuth(token)
-                .withJson(LOGOUT_TEMPL.replace("$token", token)));
-        } catch (Exception ex) { throw new ElasticClientException("failed to logout"); }
     }
 
     private Subject authenticateInternal(String authHeader) {

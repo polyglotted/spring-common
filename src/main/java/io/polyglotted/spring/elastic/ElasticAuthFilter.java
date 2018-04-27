@@ -32,7 +32,7 @@ public class ElasticAuthFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    static class ElasticClientException extends RuntimeException {
+    public static class ElasticClientException extends RuntimeException {
         ElasticClientException(String message) { super(message); }
     }
 }

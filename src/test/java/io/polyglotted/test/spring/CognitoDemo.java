@@ -7,7 +7,7 @@ import com.ulisesbocchio.jasyptspringboot.annotation.EnableEncryptableProperties
 import io.polyglotted.aws.config.AwsConfig;
 import io.polyglotted.aws.config.CredsProvider;
 import io.polyglotted.common.model.MapResult.SimpleMapResult;
-import io.polyglotted.spring.cognito.AbstractCognito.CognitoConfig;
+import io.polyglotted.spring.cognito.CognitoConfig;
 import io.polyglotted.spring.security.DefaultAuthToken;
 import io.polyglotted.spring.web.SimpleResponse;
 import lombok.Getter;
