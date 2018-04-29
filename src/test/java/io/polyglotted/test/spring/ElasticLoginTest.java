@@ -34,5 +34,5 @@ public class ElasticLoginTest extends AbstractSpringTest {
         return authToken;
     }
 
-    private void elasticLogout(AuthToken token) { assertEntity(doPost("/elastic/logout", null, token, MapResult.class), OK, "result", "logged-out"); }
+    private void elasticLogout(AuthToken token) { assertEntity(doGet("/elastic/logout", token, MapResult.class), OK, "result", "logged-out"); }
 }

@@ -12,6 +12,7 @@ import io.polyglotted.spring.cognito.CognitoConfig;
 import io.polyglotted.spring.cognito.CognitoProcessor;
 import io.polyglotted.spring.elastic.ElasticProcessor;
 import io.polyglotted.spring.security.DefaultAuthToken;
+import io.polyglotted.spring.web.JacksonConfiguration;
 import io.polyglotted.spring.web.SimpleResponse;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -23,6 +24,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Import;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -49,9 +51,8 @@ import static io.polyglotted.common.model.MapResult.immutableResult;
 import static io.polyglotted.common.util.EncodingUtil.urlDecode;
 import static io.polyglotted.common.util.StrUtil.safeLastSuffix;
 
-@SuppressWarnings("unused")
-@ComponentScan({"io.polyglotted.spring"})
-@EnableEncryptableProperties @SpringBootApplication
+@SuppressWarnings("unused") @ComponentScan({"io.polyglotted.spring"})
+@Import(JacksonConfiguration.class) @EnableEncryptableProperties @SpringBootApplication
 public class CognitoDemo {
     @Bean @ConfigurationProperties("aws")
     public AwsConfig awsConfig() { return new AwsConfig(); }
@@ -130,8 +131,8 @@ public class CognitoDemo {
         @PostMapping(path = "/cognito/login", params = {"email", "password"}, produces = "application/json")
         public AuthenticationResultType login(String email, String password) throws IOException { return cognitoProcessor.login(email, password); }
 
-        @PostMapping(path = "/cognito/logout", produces = "application/json")
-        public SimpleResponse logout(@RequestBody AuthToken result) throws IOException { return cognitoProcessor.logout(result); }
+        @GetMapping(path = "/cognito/logout", produces = "application/json")
+        public SimpleResponse logout(DefaultAuthToken token) throws IOException { return cognitoProcessor.logout((String) token.getCredentials()); }
     }
 
     @RestController static class ElasticLoginController {
@@ -140,7 +141,7 @@ public class CognitoDemo {
         @PostMapping(path = "/elastic/login", params = {"userId", "password"}, produces = "application/json")
         public AuthToken login(String userId, String password) throws IOException { return elasticProcessor.login(userId, password); }
 
-        @PostMapping(path = "/elastic/logout", produces = "application/json")
-        public SimpleResponse logout(@RequestBody AuthToken result) throws IOException { return elasticProcessor.logout(result.accessToken); }
+        @GetMapping(path = "/elastic/logout", produces = "application/json")
+        public SimpleResponse logout(DefaultAuthToken token) throws IOException { return elasticProcessor.logout((String) token.getCredentials()); }
     }
 }

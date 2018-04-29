@@ -12,7 +12,6 @@ import com.amazonaws.services.cognitoidp.model.GlobalSignOutRequest;
 import com.amazonaws.services.cognitoidp.model.NotAuthorizedException;
 import com.amazonaws.services.cognitoidp.model.UserNotFoundException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.polyglotted.common.model.AuthToken;
 import io.polyglotted.common.model.MapResult;
 import io.polyglotted.common.model.Subject;
 import io.polyglotted.spring.cognito.CognitoAuthFilter.NotCognitoException;
@@ -65,10 +64,10 @@ public class CognitoProcessor {
         }
     }
 
-    public SimpleResponse logout(AuthToken token) {
+    public SimpleResponse logout(String accessToken) {
         try {
-            cognitoClient.globalSignOut(new GlobalSignOutRequest().withAccessToken(token.accessToken));
-        } catch (Exception ex) { log.warn("failed to logout " + token.accessToken); }
+            cognitoClient.globalSignOut(new GlobalSignOutRequest().withAccessToken(accessToken));
+        } catch (Exception ex) { log.warn("failed to logout " + accessToken); }
         return new SimpleResponse("logged-out");
     }
 

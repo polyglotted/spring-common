@@ -41,7 +41,7 @@ abstract class AbstractSpringTest {
         return authToken;
     }
 
-    void logout(AuthToken token) { assertEntity(doPost("/cognito/logout", null, token, MapResult.class), OK, "result", "logged-out"); }
+    void logout(AuthToken token) { assertEntity(doGet("/cognito/logout", token, MapResult.class), OK, "result", "logged-out"); }
 
     <T> ResponseEntity<T> doGet(String url, AuthToken key, Class<T> clazz) { return checkOk(execute(url, GET, key, null, clazz)); }
 
