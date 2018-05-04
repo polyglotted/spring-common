@@ -63,11 +63,14 @@ public class ElasticProcessor implements Closeable {
 
     DefaultAuthToken authenticate(HttpServletRequest request) {
         String header = request.getHeader(AUTHORIZATION);
-        if (header != null && header.startsWith("Bearer") && !header.contains(".")) {
-            Subject subject = authenticateInternal(header);
-            return new DefaultAuthToken(subject, header.substring(7), authorities(subject.roles));
+        if (header != null) {
+            if (header.startsWith("Basic") || (header.startsWith("Bearer") && !header.contains("."))) {
+                Subject subject = authenticateInternal(header);
+                return new DefaultAuthToken(subject, header, authorities(subject.roles));
+            }
+            log.trace("no Bearer token or Basic Auth found in AUTHORISATION header");
         }
-        log.trace("No Bearer token found in HTTP Authorization header");
+        log.trace("AUTHORISATION header not found");
         return null;
     }
 

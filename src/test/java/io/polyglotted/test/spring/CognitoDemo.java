@@ -48,6 +48,7 @@ import static io.polyglotted.aws.common.AwsContentUtil.fetchContentType;
 import static io.polyglotted.aws.common.S3Fetcher.fetchMayBeSecure;
 import static io.polyglotted.aws.common.S3Fetcher.fetchObjectMetadata;
 import static io.polyglotted.common.model.MapResult.immutableResult;
+import static io.polyglotted.common.util.EncodingUtil.encodeBase64;
 import static io.polyglotted.common.util.EncodingUtil.urlDecode;
 import static io.polyglotted.common.util.StrUtil.safeLastSuffix;
 
@@ -76,6 +77,8 @@ public class CognitoDemo {
         private String password;
 
         IntegrationUser(String email, String passwd) { this.email = email; this.password = passwd; }
+
+        String basicHeader() { return "Basic " + encodeBase64((email + ":" + password).getBytes()); }
     }
 
     @RestController static class SampleController {
@@ -83,7 +86,7 @@ public class CognitoDemo {
         @GetMapping(path = "/api/sample", produces = "application/json")
         public SimpleResponse sample(Principal subject) { return SimpleResponse.OK; }
 
-        @PreAuthorize("hasRole('ROLE_ADMINISTRATOR')")
+        @PreAuthorize("hasRole('ROLE_ADMINISTRATOR') or hasRole('ROLE_SUPERUSER')")
         @GetMapping(path = "/api/sample-admin", produces = "application/json")
         public SimpleResponse sampleAdmin(DefaultAuthToken token) { return new SimpleResponse(immutableResult("result", "admin")); }
     }
@@ -132,7 +135,7 @@ public class CognitoDemo {
         public AuthenticationResultType login(String email, String password) throws IOException { return cognitoProcessor.login(email, password); }
 
         @GetMapping(path = "/cognito/logout", produces = "application/json")
-        public SimpleResponse logout(DefaultAuthToken token) throws IOException { return cognitoProcessor.logout((String) token.getCredentials()); }
+        public SimpleResponse logout(DefaultAuthToken token) throws IOException { return cognitoProcessor.logout(token.logoutToken()); }
     }
 
     @RestController static class ElasticLoginController {
@@ -142,6 +145,6 @@ public class CognitoDemo {
         public AuthToken login(String userId, String password) throws IOException { return elasticProcessor.login(userId, password); }
 
         @GetMapping(path = "/elastic/logout", produces = "application/json")
-        public SimpleResponse logout(DefaultAuthToken token) throws IOException { return elasticProcessor.logout((String) token.getCredentials()); }
+        public SimpleResponse logout(DefaultAuthToken token) throws IOException { return elasticProcessor.logout(token.logoutToken()); }
     }
 }

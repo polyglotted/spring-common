@@ -52,8 +52,12 @@ abstract class AbstractSpringTest {
     void doDelete(String url, AuthToken key) { checkOk(execute(url, DELETE, key, null, MapResult.class)); }
 
     <T> ResponseEntity<T> execute(String url, HttpMethod method, AuthToken token, Object body, Class<T> clazz) {
+        return execute(url, method, token == null ? null : "Bearer " + token.accessToken, body, clazz);
+    }
+
+    <T> ResponseEntity<T> execute(String url, HttpMethod method, String authHeader, Object body, Class<T> clazz) {
         HttpHeaders headers = new HttpHeaders(); headers.setAccept(immutableList(MediaType.APPLICATION_JSON));
-        if (token != null) { headers.add(HttpHeaders.AUTHORIZATION, "Bearer " + token.accessToken); }
+        if (authHeader != null) { headers.add(HttpHeaders.AUTHORIZATION, authHeader); }
         return restTemplate.exchange(url, method, new HttpEntity<>(body, headers), clazz);
     }
 

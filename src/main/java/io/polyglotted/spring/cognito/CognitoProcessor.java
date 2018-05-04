@@ -78,7 +78,7 @@ public class CognitoProcessor {
         if (header != null && header.startsWith("Bearer")) {
             String bearerToken = header.substring(7);
             List<String> roles = fetchRoles(bearerToken);
-            return new DefaultAuthToken(getUser(bearerToken).roles(roles).build(), bearerToken, authorities(roles));
+            return new DefaultAuthToken(getUser(bearerToken).roles(roles).build(), header, authorities(roles));
         }
         log.trace("No Bearer token found in HTTP Authorization header");
         return null;

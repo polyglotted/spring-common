@@ -14,4 +14,6 @@ public class DefaultAuthToken extends AbstractAuthenticationToken {
     public DefaultAuthToken(Subject subject, String credentials, Collection<GrantedAuthority> authorities) {
         super(authorities); super.setAuthenticated(true); this.principal = subject; this.credentials = credentials;
     }
+
+    public String logoutToken() { return ((String) credentials).substring(7); }
 }

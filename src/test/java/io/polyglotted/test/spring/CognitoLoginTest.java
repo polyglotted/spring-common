@@ -19,16 +19,16 @@ public class CognitoLoginTest extends AbstractSpringTest {
     @Test
     public void loginFailure() throws Exception {
         String url = "/cognito/login?email=&password=fooBarBaz";
-        assertEntity(execute(url, POST, null, null, MapResult.class), BAD_REQUEST, "message", "Invalid credentials.");
+        assertEntity(execute(url, POST, (AuthToken) null, null, MapResult.class), BAD_REQUEST, "message", "Invalid credentials.");
 
         url = "/cognito/login?email=" + user1.getEmail() + "&password=";
-        assertEntity(execute(url, POST, null, null, MapResult.class), BAD_REQUEST, "message", "Invalid credentials.");
+        assertEntity(execute(url, POST, (AuthToken) null, null, MapResult.class), BAD_REQUEST, "message", "Invalid credentials.");
 
         url = "/cognito/login?email=" + user1.getEmail() + "&password=fooBarBaz";
-        assertEntity(execute(url, POST, null, null, MapResult.class), UNAUTHORIZED, "message", "Incorrect username or password.");
+        assertEntity(execute(url, POST, (AuthToken) null, null, MapResult.class), UNAUTHORIZED, "message", "Incorrect username or password.");
 
         url = "/cognito/login?email=foo@fooz.com&password=fooBarBaz";
-        assertEntity(execute(url, POST, null, null, MapResult.class), UNAUTHORIZED, "message", "User does not exist.");
+        assertEntity(execute(url, POST, (AuthToken) null, null, MapResult.class), UNAUTHORIZED, "message", "User does not exist.");
     }
 
     @Test

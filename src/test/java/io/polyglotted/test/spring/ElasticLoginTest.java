@@ -20,10 +20,13 @@ public class ElasticLoginTest extends AbstractSpringTest {
 
     @Test
     public void loginLogoutSuccess() throws Exception {
-        AuthToken token = elasticLogin(new IntegrationUser("elastic", "SteelEye"));
+        IntegrationUser user = new IntegrationUser("elastic", "SteelEye");
+        AuthToken token = elasticLogin(user);
         try {
             assertEntity(doGet("/api/sample", token, MapResult.class), OK, "result", "ok");
         } finally { elasticLogout(token); }
+
+        assertEntity(execute("/api/sample-admin", GET, user.basicHeader(), null, MapResult.class), OK, "result", "admin");
         assertEntity(execute("/api/sample", GET, token, null, MapResult.class), UNAUTHORIZED, "message", "Unauthorized");
     }
 
