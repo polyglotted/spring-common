@@ -12,7 +12,6 @@ import io.polyglotted.spring.cognito.CognitoConfig;
 import io.polyglotted.spring.cognito.CognitoProcessor;
 import io.polyglotted.spring.elastic.ElasticProcessor;
 import io.polyglotted.spring.security.DefaultAuthToken;
-import io.polyglotted.spring.web.JacksonConfiguration;
 import io.polyglotted.spring.web.SimpleResponse;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -24,7 +23,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Import;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -53,7 +51,7 @@ import static io.polyglotted.common.util.EncodingUtil.urlDecode;
 import static io.polyglotted.common.util.StrUtil.safeLastSuffix;
 
 @SuppressWarnings("unused") @ComponentScan({"io.polyglotted.spring"})
-@Import(JacksonConfiguration.class) @EnableEncryptableProperties @SpringBootApplication
+@EnableEncryptableProperties @SpringBootApplication
 public class CognitoDemo {
     @Bean @ConfigurationProperties("aws")
     public AwsConfig awsConfig() { return new AwsConfig(); }

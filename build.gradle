@@ -5,7 +5,7 @@ apply plugin: 'maven'
 apply plugin: 'signing'
 
 group = 'io.polyglotted'
-version = '5.0.5.3'
+version = '5.0.5.4'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
@@ -44,15 +44,12 @@ ext {
     tomcatVersion = '9.0.6'
     thymeleafVersion = '3.0.9.RELEASE'
     unbescapeVersion = '1.1.5.RELEASE' //locked-thymeleaf
-    utilsCommonVersion = '1.0.15'
+    utilsCommonVersion = '1.0.16'
     validationApiVersion = '2.0.1.Final'
 }
 
 dependencies {
     compileOnly "org.projectlombok:lombok:${lombokVersion}"
-    compileOnly("org.slf4j:jul-to-slf4j:1.7.25") {
-        exclude group: "org.slf4j", module: "slf4j-api"
-    }
     compileOnly "io.polyglotted:utils-common:${utilsCommonVersion}"
     compileOnly "io.polyglotted:aws-common:${awsCommonVersion}"
 
@@ -183,10 +180,6 @@ dependencies {
     }
     testCompile("pl.pragmatists:JUnitParams:${junitParamsVersion}") {
         exclude group: "junit", module: "junit"
-    }
-    testCompile("org.springframework.boot:spring-boot-devtools:${springBootVersion}") {
-        exclude group: "org.springframework.boot", module: "spring-boot"
-        exclude group: "org.springframework.boot", module: "spring-boot-autoconfigure"
     }
     testCompile("org.springframework:spring-test:${springVersion}") {
         exclude group: "org.springframework", module: "spring-core"
