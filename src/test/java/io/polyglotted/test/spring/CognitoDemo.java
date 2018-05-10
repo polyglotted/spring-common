@@ -84,7 +84,7 @@ public class CognitoDemo {
         @GetMapping(path = "/api/sample", produces = "application/json")
         public SimpleResponse sample(Principal subject) { return SimpleResponse.OK; }
 
-        @PreAuthorize("hasRole('ROLE_ADMINISTRATOR') or hasRole('ROLE_SUPERUSER')")
+        @PreAuthorize("hasRole('ROLE_ADMINISTRATOR')")
         @GetMapping(path = "/api/sample-admin", produces = "application/json")
         public SimpleResponse sampleAdmin(DefaultAuthToken token) { return new SimpleResponse(immutableResult("result", "admin")); }
     }
