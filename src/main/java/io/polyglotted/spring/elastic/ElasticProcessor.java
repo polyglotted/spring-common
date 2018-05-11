@@ -2,16 +2,16 @@ package io.polyglotted.spring.elastic;
 
 import io.polyglotted.common.model.AuthToken;
 import io.polyglotted.common.model.Subject;
+import io.polyglotted.common.util.HttpClientFactory.HttpConfig;
 import io.polyglotted.common.util.ListBuilder;
 import io.polyglotted.spring.elastic.ElasticAuthFilter.ElasticClientException;
 import io.polyglotted.spring.security.DefaultAuthToken;
 import io.polyglotted.spring.web.SimpleResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.client.config.RequestConfig;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.util.List;
 
 import static io.polyglotted.common.util.CollUtil.fluent;
+import static io.polyglotted.common.util.HttpClientFactory.httpClient;
 import static io.polyglotted.common.util.HttpUtil.buildDelete;
 import static io.polyglotted.common.util.HttpUtil.buildGet;
 import static io.polyglotted.common.util.HttpUtil.buildPost;
@@ -32,15 +33,17 @@ import static io.polyglotted.common.util.StrUtil.notNullOrEmpty;
 import static io.polyglotted.common.util.StrUtil.safePrefix;
 import static io.polyglotted.spring.errorhandling.ExceptionFactory.checkBadRequest;
 import static io.polyglotted.spring.errorhandling.ExceptionFactory.unauthorisedException;
+import static lombok.AccessLevel.PRIVATE;
 import static org.apache.http.HttpHeaders.AUTHORIZATION;
 
-@Slf4j @RequiredArgsConstructor @Component
+@SuppressWarnings("unused") @Slf4j @Component @RequiredArgsConstructor(access = PRIVATE)
 public class ElasticProcessor implements Closeable {
     private static final String LOGIN_TEMPL = "{\"grant_type\":\"password\",\"username\":\"$userid\",\"password\":\"$passwd\"}";
     private static final String LOGOUT_TEMPL = "{\"token\":\"$token\"}";
-    private final CloseableHttpClient httpClient = HttpClientBuilder.create().setDefaultRequestConfig(RequestConfig.custom()
-        .setConnectTimeout(3000).setSocketTimeout(3000).build()).build();
-    @Value("${idp.elastic.url:http://localhost:9200}") private String baseUri = null;
+    private final CloseableHttpClient httpClient;
+    private final String baseUri;
+
+    @Autowired public ElasticProcessor(@Qualifier("idpEsHttpConfig") HttpConfig config) { this(httpClient(config), config.url()); }
 
     @PreDestroy @Override public void close() throws IOException { httpClient.close(); }
 
@@ -50,6 +53,7 @@ public class ElasticProcessor implements Closeable {
             return AuthToken.buildWith(execute(httpClient, buildPost(baseUri, "/_xpack/security/oauth2/token").withBasicAuth(userId, password)
                 .withJson(LOGIN_TEMPL.replace("$userid", userId).replace("$passwd", password))));
         } catch (Exception ex) {
+            ex.printStackTrace();
             log.debug("not found or invalid creds: {}", userId); throw unauthorisedException(safePrefix(ex.getMessage(), " ("));
         }
     }

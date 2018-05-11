@@ -44,7 +44,7 @@ ext {
     tomcatVersion = '9.0.6'
     thymeleafVersion = '3.0.9.RELEASE'
     unbescapeVersion = '1.1.5.RELEASE' //locked-thymeleaf
-    utilsCommonVersion = '1.0.17'
+    utilsCommonVersion = '1.0.20'
     validationApiVersion = '2.0.1.Final'
 }
 
