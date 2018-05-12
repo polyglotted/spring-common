@@ -8,7 +8,7 @@ import io.polyglotted.aws.common.AwsClientFactory;
 import io.polyglotted.aws.config.AwsConfig;
 import io.polyglotted.common.model.AuthToken;
 import io.polyglotted.common.model.MapResult.SimpleMapResult;
-import io.polyglotted.common.util.HttpClientFactory.HttpConfig;
+import io.polyglotted.common.util.HttpConfig;
 import io.polyglotted.spring.cognito.CognitoConfig;
 import io.polyglotted.spring.cognito.CognitoProcessor;
 import io.polyglotted.spring.elastic.ElasticProcessor;

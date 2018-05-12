@@ -2,7 +2,7 @@ package io.polyglotted.spring.elastic;
 
 import io.polyglotted.common.model.AuthToken;
 import io.polyglotted.common.model.Subject;
-import io.polyglotted.common.util.HttpClientFactory.HttpConfig;
+import io.polyglotted.common.util.HttpConfig;
 import io.polyglotted.common.util.ListBuilder;
 import io.polyglotted.spring.elastic.ElasticAuthFilter.ElasticClientException;
 import io.polyglotted.spring.security.DefaultAuthToken;
@@ -23,7 +23,7 @@ import java.io.IOException;
 import java.util.List;
 
 import static io.polyglotted.common.util.CollUtil.fluent;
-import static io.polyglotted.common.util.HttpClientFactory.httpClient;
+import static io.polyglotted.common.util.HttpConfig.httpClient;
 import static io.polyglotted.common.util.HttpUtil.buildDelete;
 import static io.polyglotted.common.util.HttpUtil.buildGet;
 import static io.polyglotted.common.util.HttpUtil.buildPost;
