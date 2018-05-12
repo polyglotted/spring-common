@@ -1,5 +1,6 @@
 package io.polyglotted.spring.security;
 
+import io.polyglotted.common.model.AuthHeader;
 import io.polyglotted.common.model.Subject;
 import lombok.Getter;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
@@ -19,6 +20,8 @@ public class DefaultAuthToken extends AbstractAuthenticationToken {
     public String userId() { return subject().username; }
 
     public Subject subject() { return (Subject) principal; }
+
+    public AuthHeader authHeader() { return AuthHeader.authHeader(credentials); }
 
     public String logoutToken() { return ((String) credentials).substring(7); }
 }
