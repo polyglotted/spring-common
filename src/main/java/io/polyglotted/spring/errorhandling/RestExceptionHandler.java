@@ -20,7 +20,7 @@ import static org.springframework.core.Ordered.HIGHEST_PRECEDENCE;
 import static org.springframework.http.HttpStatus.FORBIDDEN;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 
-@Slf4j @Order(HIGHEST_PRECEDENCE) @ControllerAdvice
+@SuppressWarnings("unused") @Slf4j @Order(HIGHEST_PRECEDENCE) @ControllerAdvice
 public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(NotFoundException.class)
