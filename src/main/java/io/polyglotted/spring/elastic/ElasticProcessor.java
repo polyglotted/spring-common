@@ -87,13 +87,17 @@ public class ElasticProcessor implements Closeable {
 
     private static List<GrantedAuthority> authorities(List<String> roles) {
         return ListBuilder.<GrantedAuthority>immutableListBuilder()
-            .add(new SimpleGrantedAuthority("ROLE_CONSUMER")).add(new SimpleGrantedAuthority("ROLE_CURATOR"))
+            .add(new SimpleGrantedAuthority("ROLE_CONSUMER"))
             .addAll(fluent(roles).transformAndConcat(ElasticProcessor::transformRole))
             .build();
     }
 
     private static List<GrantedAuthority> transformRole(String role) {
-        return "superuser".equals(role) ? immutableList(new SimpleGrantedAuthority("ROLE_ADMINISTRATOR"), new SimpleGrantedAuthority("ROLE_MODELER"),
-            new SimpleGrantedAuthority("ROLE_GATE_KEEPER")) : immutableList(new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()));
+        return !"superuser".equals(role) ? immutableList(new SimpleGrantedAuthority("ROLE_" + role.toUpperCase())) : immutableList(
+            new SimpleGrantedAuthority("ROLE_CURATOR"),
+            new SimpleGrantedAuthority("ROLE_MODELER"),
+            new SimpleGrantedAuthority("ROLE_GATE_KEEPER"),
+            new SimpleGrantedAuthority("ROLE_ADMINISTRATOR")
+        );
     }
 }

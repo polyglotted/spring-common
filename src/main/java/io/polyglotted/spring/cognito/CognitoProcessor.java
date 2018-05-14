@@ -100,7 +100,7 @@ public class CognitoProcessor {
 
     private static List<String> rolesFrom(MapResult map) { return transformList(listVal(map, "cognito:groups"), CognitoProcessor::groupToRole); }
 
-    private static String groupToRole(String group) { return group.startsWith("ABACI_") ? group.substring(6) : group; }
+    private static String groupToRole(String group) { return group.startsWith("ABACI_") ? group.substring(6) : group.toUpperCase(); }
 
     private static List<GrantedAuthority> authorities(List<String> roles) {
         return transformList(roles, role -> new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()));
