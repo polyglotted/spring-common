@@ -5,7 +5,7 @@ apply plugin: 'maven'
 apply plugin: 'signing'
 
 group = 'io.polyglotted'
-version = '5.0.6'
+version = '5.0.6.1'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
@@ -24,9 +24,10 @@ repositories {
     maven { url "https://repo.spring.io/milestone" }
 }
 ext {
-    attoParserVersion = '2.0.4.RELEASE' //locked-thymeleaf
+    attoParserVersion = '2.0.4.RELEASE' //locked by thymeleaf
     awsCommonVersion = '1.11.333'
     base64Version = '2.3.9'
+    byteBuddyVersion = '1.7.9' //locked by springfox
     classmateVersion = '1.4.0'
     hamcrestVersion = '1.3'
     hibernateVersion = '6.0.10.Final'
@@ -37,13 +38,18 @@ ext {
     junitVersion = '4.12'
     junitParamsVersion = '1.1.1'
     lombokVersion = '1.16.20'
-    ognlVersion = '3.1.12' //locked-thymeleaf
-    springBootVersion = '2.0.2.RELEASE'
-    springSecurityVersion = '5.0.5.RELEASE'
+    mapstructVersion = '1.2.0.Final' //locked by springfox
+    ognlVersion = '3.1.12' //locked by thymeleaf
+    reflectionsVersion = '0.9.11' //locked by springfox
     springVersion = '5.0.6.RELEASE'
+    springBootVersion = '2.0.2.RELEASE'
+    springFoxVersion = '2.8.0'
+    springPluginVersion = '1.2.0.RELEASE' //locked by springfox
+    springSecurityVersion = '5.0.5.RELEASE'
+    swaggerVersion = '1.5.14' //locked by springfox
     tomcatVersion = '9.0.8'
     thymeleafVersion = '3.0.9.RELEASE'
-    unbescapeVersion = '1.1.5.RELEASE' //locked-thymeleaf
+    unbescapeVersion = '1.1.5.RELEASE' //locked by thymeleaf
     utilsCommonVersion = '1.0.22'
     validationApiVersion = '2.0.1.Final'
 }
@@ -173,6 +179,82 @@ dependencies {
         exclude group: "org.springframework.boot", module: "spring-boot-actuator"
     }
     compile "org.unbescape:unbescape:${unbescapeVersion}"
+
+    compile("io.springfox:springfox-core:${springFoxVersion}") {
+        exclude group: "org.springframework.plugin", module: "spring-plugin-metadata"
+        exclude group: "org.springframework.plugin", module: "spring-plugin-core"
+        exclude group: "org.slf4j", module: "slf4j-api"
+        exclude group: "com.google.guava", module: "guava"
+        exclude group: "com.fasterxml", module: "classmate"
+        exclude group: "net.bytebuddy", module: "byte-buddy"
+    }
+    compile("io.springfox:springfox-spi:${springFoxVersion}") {
+        exclude group: "io.springfox", module: "springfox-core"
+    }
+    compile("io.springfox:springfox-schema:${springFoxVersion}") {
+        exclude group: "io.springfox", module: "springfox-core"
+        exclude group: "io.springfox", module: "springfox-spi"
+    }
+    compile("io.springfox:springfox-spring-web:${springFoxVersion}") {
+        exclude group: "io.springfox", module: "springfox-spi"
+        exclude group: "org.springframework.plugin", module: "spring-plugin-metadata"
+        exclude group: "org.springframework.plugin", module: "spring-plugin-core"
+        exclude group: "org.slf4j", module: "slf4j-api"
+        exclude group: "org.reflections", module: "reflections"
+        exclude group: "com.google.guava", module: "guava"
+        exclude group: "com.fasterxml", module: "classmate"
+    }
+    compile("io.springfox:springfox-swagger-common:${springFoxVersion}") {
+        exclude group: "io.swagger", module: "swagger-models"
+        exclude group: "io.springfox", module: "springfox-spring-web"
+        exclude group: "io.springfox", module: "springfox-schema"
+        exclude group: "io.springfox", module: "springfox-spi"
+        exclude group: "org.springframework.plugin", module: "spring-plugin-metadata"
+        exclude group: "org.springframework.plugin", module: "spring-plugin-core"
+        exclude group: "org.slf4j", module: "slf4j-api"
+        exclude group: "com.google.guava", module: "guava"
+        exclude group: "com.fasterxml", module: "classmate"
+        exclude group: "io.swagger", module: "swagger-annotations"
+    }
+    compile("io.springfox:springfox-swagger2:${springFoxVersion}") {
+        exclude group: "io.springfox", module: "springfox-swagger-common"
+        exclude group: "io.swagger", module: "swagger-models"
+        exclude group: "io.springfox", module: "springfox-spring-web"
+        exclude group: "io.springfox", module: "springfox-schema"
+        exclude group: "io.springfox", module: "springfox-spi"
+        exclude group: "org.springframework.plugin", module: "spring-plugin-metadata"
+        exclude group: "org.springframework.plugin", module: "spring-plugin-core"
+        exclude group: "org.slf4j", module: "slf4j-api"
+        exclude group: "com.google.guava", module: "guava"
+        exclude group: "com.fasterxml", module: "classmate"
+        exclude group: "io.swagger", module: "swagger-annotations"
+        exclude group: "org.mapstruct", module: "mapstruct"
+    }
+    compile("io.springfox:springfox-swagger-ui:${springFoxVersion}") {
+        exclude group: "io.springfox", module: "springfox-spring-web"
+    }
+    compile "io.swagger:swagger-annotations:${swaggerVersion}"
+    compile("io.swagger:swagger-models:${swaggerVersion}") {
+        exclude group: "org.slf4j", module: "slf4j-api"
+        exclude group: "com.fasterxml.jackson.core", module: "jackson-annotations"
+        exclude group: "io.swagger", module: "swagger-annotations"
+    }
+    compile "net.bytebuddy:byte-buddy:${byteBuddyVersion}"
+    compile "org.mapstruct:mapstruct:${mapstructVersion}"
+    compile("org.reflections:reflections:${reflectionsVersion}") {
+        exclude group: "com.google.guava", module: "guava"
+        exclude group: "org.javassist", module: "javassist"
+    }
+    compile("org.springframework.plugin:spring-plugin-core:${springPluginVersion}") {
+        exclude group: "org.slf4j", module: "slf4j-api"
+        exclude group: "org.springframework", module: "spring-context"
+        exclude group: "org.springframework", module: "spring-aop"
+        exclude group: "org.springframework", module: "spring-beans"
+    }
+    compile("org.springframework.plugin:spring-plugin-metadata:${springPluginVersion}") {
+        exclude group: "org.slf4j", module: "slf4j-api"
+        exclude group: "org.springframework.plugin", module: "spring-plugin-core"
+    }
 
     testCompile "org.hamcrest:hamcrest-all:${hamcrestVersion}"
     testCompile("junit:junit:${junitVersion}") {
