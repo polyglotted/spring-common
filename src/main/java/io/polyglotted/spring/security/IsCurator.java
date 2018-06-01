@@ -6,5 +6,5 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 @SuppressWarnings("unused") @Retention(RetentionPolicy.RUNTIME)
-@PreAuthorize("hasAnyRole('ROLE_ADMINISTRATOR','ROLE_GATE_KEEPER','ROLE_MODELER')")
-public @interface IsModeler {}
+@PreAuthorize("hasAnyRole('ROLE_ADMINISTRATOR','ROLE_CURATOR','ROLE_GATE_KEEPER','ROLE_MODELER')")
+public @interface IsCurator {}
