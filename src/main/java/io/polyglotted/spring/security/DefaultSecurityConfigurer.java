@@ -7,26 +7,24 @@ import io.polyglotted.spring.elastic.ElasticProcessor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.firewall.HttpFirewall;
 import org.springframework.security.web.firewall.StrictHttpFirewall;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
 
 import static io.polyglotted.common.util.ListBuilder.immutableList;
+import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 import static org.springframework.util.StringUtils.toStringArray;
 
-@EnableWebSecurity @SuppressWarnings("unused")
+@EnableWebSecurity @SuppressWarnings({"unused", "WeakerAccess"})
 @EnableGlobalMethodSecurity(securedEnabled = true, prePostEnabled = true)
 public class DefaultSecurityConfigurer extends WebSecurityConfigurerAdapter {
     @Autowired private final DefaultAuthProvider defaultAuthProvider = null;
@@ -36,9 +34,6 @@ public class DefaultSecurityConfigurer extends WebSecurityConfigurerAdapter {
 
     @Value("#{'${spring.authorised.endpoints:/api/**}'.split(',')}") private List<String> authorisedEndpoints = immutableList();
     @Value("#{'${spring.unauthorised.endpoints}'.split(',')}") private List<String> unauthorisedEndpoints = immutableList();
-    @Value("#{'${spring.cors.headers:Authorization,Cache-Control,Content-Type,DNT,If-Modified-Since,Keep-Alive," +
-        "User-Agent,X-Requested-With,X-Proxy-User,X-Session-Token,X-Realm,X-Real-IP,X-Forwarded-For}'.split(',')}")
-    private List<String> corsHeaders = immutableList();
 
     @Override public void configure(AuthenticationManagerBuilder auth) throws Exception { auth.authenticationProvider(defaultAuthProvider); }
 
@@ -52,12 +47,13 @@ public class DefaultSecurityConfigurer extends WebSecurityConfigurerAdapter {
         http.httpBasic()
           .and()
             .csrf().disable()
-            .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            .sessionManagement().sessionCreationPolicy(STATELESS)
           .and()
             .exceptionHandling()
             .authenticationEntryPoint(restAuthEntryPoint)
           .and()
             .authorizeRequests()
+                .antMatchers(HttpMethod.OPTIONS).permitAll()
                 .antMatchers(toStringArray(unauthorisedEndpoints)).permitAll()
                 .antMatchers(toStringArray(authorisedEndpoints)).authenticated()
                 .anyRequest().authenticated()
@@ -68,19 +64,7 @@ public class DefaultSecurityConfigurer extends WebSecurityConfigurerAdapter {
         // @formatter:on
     }
 
-    @Bean CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(immutableList("*"));
-        configuration.setAllowedMethods(immutableList("GET", "POST", "PUT", "DELETE", "HEAD", "OPTIONS"));
-        configuration.setAllowedHeaders(corsHeaders);
-        configuration.setAllowCredentials(true);
-        configuration.setMaxAge(3600L);
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
-    }
-
-    @SuppressWarnings("WeakerAccess") @Bean public HttpFirewall httpFirewall() {
+    @Bean public HttpFirewall httpFirewall() {
         StrictHttpFirewall firewall = new StrictHttpFirewall();
         firewall.setAllowUrlEncodedSlash(true);
         firewall.setAllowUrlEncodedPercent(true);
