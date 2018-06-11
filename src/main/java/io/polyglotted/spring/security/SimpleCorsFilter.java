@@ -21,7 +21,7 @@ public class SimpleCorsFilter extends GenericFilterBean {
 
     @Override public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         HttpServletResponse httpRes = (HttpServletResponse) response;
-        httpRes.setHeader("Access-Control-Allow-Origin", "*");
+        httpRes.setHeader("Access-Control-Allow-Origin", request.getRemoteHost() + ":" + request.getRemotePort());
         httpRes.setHeader("Access-Control-Allow-Methods", "DELETE, GET, HEAD, OPTIONS, POST, PUT");
         httpRes.setHeader("Access-Control-Allow-Headers", corsHeaders);
         httpRes.setHeader("Access-Control-Allow-Credentials", "true");
