@@ -10,8 +10,11 @@ import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+
+import static io.polyglotted.common.util.NullUtil.nonNull;
 
 @Component @Order(Ordered.HIGHEST_PRECEDENCE)
 public class SimpleCorsFilter extends GenericFilterBean {
@@ -20,8 +23,10 @@ public class SimpleCorsFilter extends GenericFilterBean {
     private String corsHeaders = null;
 
     @Override public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
+        HttpServletRequest httpReq = (HttpServletRequest) request;
         HttpServletResponse httpRes = (HttpServletResponse) response;
-        httpRes.setHeader("Access-Control-Allow-Origin", request.getRemoteHost() + ":" + request.getRemotePort());
+        String allowOrigin = nonNull(httpReq.getHeader("X-REALM"), request.getRemoteHost() + ":" + request.getRemotePort());
+        httpRes.setHeader("Access-Control-Allow-Origin", "http://" + allowOrigin);
         httpRes.setHeader("Access-Control-Allow-Methods", "DELETE, GET, HEAD, OPTIONS, POST, PUT");
         httpRes.setHeader("Access-Control-Allow-Headers", corsHeaders);
         httpRes.setHeader("Access-Control-Allow-Credentials", "true");

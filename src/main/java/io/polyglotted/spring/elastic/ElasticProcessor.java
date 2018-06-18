@@ -21,6 +21,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.ConnectException;
+import java.net.URL;
 import java.util.List;
 
 import static io.polyglotted.common.util.CollUtil.fluent;
@@ -30,6 +31,7 @@ import static io.polyglotted.common.util.HttpUtil.buildGet;
 import static io.polyglotted.common.util.HttpUtil.buildPost;
 import static io.polyglotted.common.util.HttpUtil.execute;
 import static io.polyglotted.common.util.ListBuilder.immutableList;
+import static io.polyglotted.common.util.ResourceUtil.urlResource;
 import static io.polyglotted.common.util.StrUtil.notNullOrEmpty;
 import static io.polyglotted.common.util.StrUtil.safePrefix;
 import static io.polyglotted.common.util.ThreadUtil.safeSleep;
@@ -109,7 +111,8 @@ public class ElasticProcessor implements Closeable {
     private static CloseableHttpClient createHttpClient(HttpConfig config) {
         for (int i = 0; i <= 300; i++) {
             try {
-                log.debug("connecting to " + config.url()); return httpClient(config);
+                URL trustStore = urlResource(ElasticProcessor.class, "elastic-spring-ca.p12");
+                log.debug("connecting to " + config.url()); return httpClient(config.setTrustStore(trustStore.toString()));
             } catch (Exception ioe) {
                 if (ioe instanceof ConnectException) { safeSleep(1000); }
                 else { throw ioe; }
