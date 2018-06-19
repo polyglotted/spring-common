@@ -46,9 +46,10 @@ public class ElasticProcessor implements Closeable {
     private static final String LOGOUT_TEMPL = "{\"token\":\"$token\"}";
     private final CloseableHttpClient httpClient;
     private final String baseUri;
+    private final EsBootstrapAuth auth;
 
-    @Autowired public ElasticProcessor(@Qualifier("idpEsHttpConfig") HttpConfig config) {
-        this(createHttpClient(config), config.url());
+    @Autowired public ElasticProcessor(@Qualifier("idpEsHttpConfig") HttpConfig config, @Qualifier("idpEsUserAuth") EsBootstrapAuth auth) {
+        this(createHttpClient(config), config.url(), auth);
     }
 
     @PreDestroy @Override public void close() throws IOException { httpClient.close(); }
@@ -56,8 +57,8 @@ public class ElasticProcessor implements Closeable {
     public AuthToken login(String userId, String password) {
         checkBadRequest(notNullOrEmpty(userId) && notNullOrEmpty(password), "Invalid credentials.");
         try {
-            return AuthToken.buildWith(execute(httpClient, buildPost(baseUri, "/_xpack/security/oauth2/token").withBasicAuth(userId, password)
-                .withJson(LOGIN_TEMPL.replace("$userid", userId).replace("$passwd", password))));
+            return AuthToken.buildWith(execute(httpClient, buildPost(baseUri, "/_xpack/security/oauth2/token")
+                .withBasicAuth(auth.username, auth.password).withJson(LOGIN_TEMPL.replace("$userid", userId).replace("$passwd", password))));
         } catch (Exception ex) {
             ex.printStackTrace();
             log.debug("not found or invalid creds: {}", userId); throw unauthorisedException(safePrefix(ex.getMessage(), " ("));

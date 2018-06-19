@@ -11,6 +11,7 @@ import io.polyglotted.common.model.MapResult.SimpleMapResult;
 import io.polyglotted.common.util.HttpConfig;
 import io.polyglotted.spring.cognito.CognitoConfig;
 import io.polyglotted.spring.cognito.CognitoProcessor;
+import io.polyglotted.spring.elastic.EsBootstrapAuth;
 import io.polyglotted.spring.elastic.ElasticProcessor;
 import io.polyglotted.spring.security.DefaultAuthToken;
 import io.polyglotted.spring.web.SimpleResponse;
@@ -62,6 +63,9 @@ public class CognitoDemo {
 
     @Bean(name = "idpEsHttpConfig") @ConfigurationProperties("idp.es.http")
     public HttpConfig httpConfig() { return new HttpConfig().setScheme("https"); }
+
+    @Bean(name = "idpEsUserAuth") @ConfigurationProperties("idp.es.auth")
+    public EsBootstrapAuth ipdBootstrapAuth() { return new EsBootstrapAuth(); }
 
     @Bean(name = "integrationUser1") @ConfigurationProperties("spc.intg.user")
     public IntegrationUser integrationUser1() { return new IntegrationUser(); }
