@@ -5,7 +5,7 @@ apply plugin: 'maven'
 apply plugin: 'signing'
 
 group = 'io.polyglotted'
-version = '5.0.7.1'
+version = project.projVersion
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
@@ -25,19 +25,19 @@ repositories {
 }
 ext {
     attoParserVersion = '2.0.4.RELEASE' //locked by thymeleaf
-    awsCommonVersion = '1.11.349'
+    awsCommonVersion = '1.11.372'
     base64Version = '2.3.9'
     byteBuddyVersion = '1.7.9' //locked by springfox
     classmateVersion = '1.4.0'
     hamcrestVersion = '1.3'
     hibernateVersion = '6.0.10.Final'
     jasyptVersion = '1.9.2'
-    jasyptSpringVersion = '2.0.0'
+    jasyptSpringVersion = '2.1.0'
     javassistVersion = '3.22.0-GA'
     jbossLoggingVersion = '3.3.2.Final'
     junitVersion = '4.12'
     junitParamsVersion = '1.1.1'
-    lombokVersion = '1.16.20'
+    lombokVersion = '1.18.0'
     mapstructVersion = '1.2.0.Final' //locked by springfox
     ognlVersion = '3.1.12' //locked by thymeleaf
     reflectionsVersion = '0.9.11' //locked by springfox
@@ -50,7 +50,7 @@ ext {
     tomcatVersion = '9.0.8'
     thymeleafVersion = '3.0.9.RELEASE'
     unbescapeVersion = '1.1.5.RELEASE' //locked by thymeleaf
-    utilsCommonVersion = '1.0.26'
+    utilsCommonVersion = '1.0.27'
     validationApiVersion = '2.0.1.Final'
 }
 
