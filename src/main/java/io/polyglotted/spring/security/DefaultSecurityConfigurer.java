@@ -22,6 +22,7 @@ import java.util.List;
 
 import static io.polyglotted.common.util.ListBuilder.immutableList;
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
+import static org.springframework.security.web.csrf.CookieCsrfTokenRepository.withHttpOnlyFalse;
 import static org.springframework.util.StringUtils.toStringArray;
 
 @EnableWebSecurity @SuppressWarnings({"unused", "WeakerAccess"})
@@ -35,7 +36,7 @@ public class DefaultSecurityConfigurer extends WebSecurityConfigurerAdapter {
     @Value("#{'${spring.authorised.endpoints:/api/**}'.split(',')}") private List<String> authorisedEndpoints = immutableList();
     @Value("#{'${spring.unauthorised.endpoints}'.split(',')}") private List<String> unauthorisedEndpoints = immutableList();
 
-    @Override public void configure(AuthenticationManagerBuilder auth) throws Exception { auth.authenticationProvider(defaultAuthProvider); }
+    @Override public void configure(AuthenticationManagerBuilder auth) { auth.authenticationProvider(defaultAuthProvider); }
 
     @Override public void configure(WebSecurity web) throws Exception {
         super.configure(web);
@@ -46,8 +47,9 @@ public class DefaultSecurityConfigurer extends WebSecurityConfigurerAdapter {
         // @formatter:off
         http.httpBasic()
           .and()
-            .csrf().disable()
             .sessionManagement().sessionCreationPolicy(STATELESS)
+          .and()
+            .csrf().csrfTokenRepository(withHttpOnlyFalse())
           .and()
             .exceptionHandling()
             .authenticationEntryPoint(restAuthEntryPoint)
